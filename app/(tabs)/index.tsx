@@ -29,12 +29,12 @@ const Index = () => {
           name="ForgotPassword"
           component={ForgotPassword}
           options={{ headerShown: false }} 
-        /> 
+        /> */}
         <Stack.Screen
           name="BackgroundServices"
           component={BackgroundServices}
           options={{ headerShown: false }} 
-        />*/}
+        />
        
         <Stack.Screen
           name="VegFood"
