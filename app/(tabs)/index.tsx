@@ -7,7 +7,7 @@ import React from 'react';
  import NonVegFood from './NonVegFood';
  import Add_To_Card from './Add_To_Card';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-// import BackgroundServices from "./BackgroundServices"; 
+import BackgroundServices from "./BackgroundServices"; 
 
 const Stack = createNativeStackNavigator();
 
