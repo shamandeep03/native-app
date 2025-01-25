@@ -1,9 +1,11 @@
 import { StyleSheet, Text, View, TextInput, StatusBar, TouchableOpacity, Alert } from 'react-native';
 import React, { useState } from 'react';
 import axios from 'axios';
+import { useNavigation } from '@react-navigation/native'; // Import useNavigation
 
 const ForgotPassword = () => {
     const [email, setEmail] = useState('');
+    const navigation = useNavigation();  // Initialize navigation hook
 
     const handleForgotPassword = async () => {
         if (!email) {
@@ -36,6 +38,12 @@ const ForgotPassword = () => {
             <TouchableOpacity style={styles.button} onPress={handleForgotPassword}>
                 <Text style={styles.buttonText}>Send Reset Link</Text>
             </TouchableOpacity>
+            <Text 
+                style={{ fontWeight: 500, fontSize: 16, top: 20, left: 130 }}
+                onPress={() => navigation.navigate("Login")}  // Use navigation here
+            >
+                Back to login?
+            </Text>
         </View>
     );
 };

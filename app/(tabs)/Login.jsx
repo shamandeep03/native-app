@@ -8,7 +8,7 @@ import Field from './Field';
 const Login = (props) => {
   return (
     <Background>
-      <View style={{alignItems: 'center', width: 460}}>
+      <View style={{alignItems: 'center', width: 400}}>
         <Text
           style={{
             color: 'white',
@@ -46,7 +46,9 @@ const Login = (props) => {
           <Field placeholder="Password" secureTextEntry={true} />
           <View
             style={{alignItems: 'flex-end', width: '78%', paddingRight: 16, marginBottom: 200}}>
-            <Text style={{color: darkGreen, fontWeight: 'bold', fontSize: 16}}>
+            <Text style={{color: darkGreen, fontWeight: 600, fontSize: 16}}
+            onPress={() => props.navigation.navigate("ForgotPassword")}
+            >
               Forgot Password ?
             </Text>
           </View>

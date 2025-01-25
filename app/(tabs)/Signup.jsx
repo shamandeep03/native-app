@@ -8,7 +8,7 @@ import Field from './Field';
 const Signup = props => {
   return (
     <Background>
-      <View style={{alignItems: 'center', width: 460}}>
+      <View style={{alignItems: 'center', width: 400}}>
         <Text
           style={{
             color: 'white',
