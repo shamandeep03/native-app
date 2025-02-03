@@ -5,7 +5,6 @@ import Btn from './Btn';
 import { darkGreen } from './Constants';
 import Field from './Field';
 import axios from 'axios';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 
 const Login = (props) => {
@@ -26,9 +25,12 @@ const Login = (props) => {
       },
     })
       .then((res) => {
-        AsyncStorage.setItem('access_token', JSON.stringify(res.data.result.token));
+        // You can store the token in a global state here instead of AsyncStorage
+        const token = res.data.result.token;
         console.log('Login Success..', res);
-        navigation.navigate('HomePage');
+        
+        // Navigate to HomePage and pass the token if needed
+        navigation.navigate('HomePage', { token });
       })
       .catch((err) => {
         alert('Login Failed');

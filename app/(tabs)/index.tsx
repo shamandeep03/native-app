@@ -8,8 +8,9 @@ import Signup from './Signup';
  import VegFood from './VegFood';
  import NonVegFood from './NonVegFood';
  import Add_To_Card from './Add_To_Card';
+ import BackgroundServices from "./BackgroundServices"; 
+import SignalR from './SignalR';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import BackgroundServices from "./BackgroundServices"; 
 
 const Stack = createNativeStackNavigator();
 
@@ -17,6 +18,10 @@ const Index = () => {
   return (
     <View style={styles.container}>
       <Stack.Navigator>
+        <Stack.Screen
+          name="SignalR"
+          component={SignalR}
+          options={{ headerShown: false }}/>
     
         <Stack.Screen
           name="Home"
