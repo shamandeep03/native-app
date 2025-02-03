@@ -17,12 +17,7 @@ const Stack = createNativeStackNavigator();
 const Index = () => {
   return (
     <View style={styles.container}>
-      <Stack.Navigator>
-        <Stack.Screen
-          name="SignalR"
-          component={SignalR}
-          options={{ headerShown: false }}/>
-    
+      <Stack.Navigator>  
         <Stack.Screen
           name="Home"
           component={Home}
@@ -47,7 +42,10 @@ const Index = () => {
           options={{ headerShown: false }} 
         />  
       
-      
+           <Stack.Screen
+          name="SignalR"
+          component={SignalR}
+          options={{ headerShown: false }}/>
         <Stack.Screen
           name="BackgroundServices"
           component={BackgroundServices}

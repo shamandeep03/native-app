@@ -11,6 +11,8 @@ const Home = (props) => {
       <Text style={{ color: 'white', fontSize: 60,textAlign:'center',bottom:30 }}>Sash App!</Text>
       <Btn bgColor={green} textColor='white' btnLabel="Login" Press={() => props.navigation.navigate("Login")} />
       <Btn bgColor='white' textColor={darkGreen} btnLabel="Signup" Press={() => props.navigation.navigate("Signup")} />
+      <Btn bgColor='white' textColor={darkGreen} btnLabel="SignalR" Press={() => props.navigation.navigate("SignalR")} />
+
       </View>
     </Background>
   );
