@@ -1,10 +1,10 @@
 import { View, StyleSheet } from 'react-native';
 import React from 'react';
 import HomePage from './HomePage';
- import Login from './Login';
-import ForgotPassword from './ForgotPassword'
-import Signup from './Signup';
- import Home from './Home';
+//  import Login from './Login';
+// import ForgotPassword from './ForgotPassword'
+// import Signup from './Signup';
+//  import Home from './Home';
  import VegFood from './VegFood';
  import NonVegFood from './NonVegFood';
  import Add_To_Card from './Add_To_Card';
@@ -18,23 +18,23 @@ const Index = () => {
   return (
     <View style={styles.container}>
       <Stack.Navigator>  
-        <Stack.Screen
+        {/* <Stack.Screen
           name="Home"
           component={Home}
-          options={{ headerShown: false }}/>
-              <Stack.Screen
+          options={{ headerShown: false }}/> */}
+              {/* <Stack.Screen
           name="Signup"
           component={Signup}
-          options={{ headerShown: false }}/>
-            <Stack.Screen
+          options={{ headerShown: false }}/> */}
+            {/* <Stack.Screen
           name="Login"
           component={Login}
           options={{ headerShown: false }} 
-        />
-        <Stack.Screen
+        /> */}
+        {/* <Stack.Screen
           name="ForgotPassword"
           component={ForgotPassword}
-          options={{ headerShown: false }}/>
+          options={{ headerShown: false }}/> */}
           
        <Stack.Screen
           name="HomePage"
