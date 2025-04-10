@@ -56,8 +56,6 @@ const Add_To_Card = () => {
      </View>
      </View>
     </>
-    
-    
   )
 }
 
