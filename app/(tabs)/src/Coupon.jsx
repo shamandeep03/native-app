@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
-  Text,
+  ScrollView,
   FlatList,
   ActivityIndicator,
   StyleSheet,
@@ -9,6 +9,8 @@ import {
   TouchableOpacity,
   useWindowDimensions,
 } from 'react-native';
+
+import Category from '../src/Category'; // Make sure the path is correct
 
 const Coupon = () => {
   const [coupon, setCoupon] = useState([]);
@@ -68,7 +70,7 @@ const Coupon = () => {
   );
 
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container}>
       {loading ? (
         <ActivityIndicator size="large" color="#007bff" />
       ) : (
@@ -81,9 +83,13 @@ const Coupon = () => {
           keyExtractor={(item, index) => index.toString()}
           renderItem={renderItem}
           onScrollToIndexFailed={() => {}}
+          scrollEnabled={false} // Prevent user scroll if you're auto-scrolling
         />
       )}
-    </View>
+
+      {/* HomePage content below coupons */}
+      <Category />
+    </ScrollView>
   );
 };
 
@@ -92,8 +98,8 @@ export default Coupon;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 16,
     backgroundColor: 'white',
+    
   },
   card: {
     alignItems: 'center',
@@ -103,6 +109,7 @@ const styles = StyleSheet.create({
     width: 380,
     height: 200,
     borderRadius: 10,
-    
+    marginTop: 20,
+   
   },
 });

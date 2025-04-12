@@ -12,7 +12,8 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
-const App = () => {
+
+const Category = () => {
   const [category, setCategory] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -22,8 +23,8 @@ const App = () => {
 
   const getCategory = async () => {
     try {
-     debugger
-      const response = await fetch('http://product.sash.co.in/api/ProductCategory/category-by-id/1');
+        debugger
+      const response = await fetch('http://product.sash.co.in/api/ProductCategory/category-list');
       const text = await response.text();
       if (text) {
         debugger
@@ -50,7 +51,6 @@ const App = () => {
       categoryId: categoryItem.id,
       categoryName: categoryItem.name,
       categoryImage: categoryItem?.productFile?.url,
-
     });
   };
 
@@ -117,4 +117,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default App;
+export default Category;
