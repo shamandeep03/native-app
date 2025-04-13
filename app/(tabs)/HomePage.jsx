@@ -3,37 +3,33 @@ import {
   View,
   Text,
   FlatList,
+  Image,
   ActivityIndicator,
   StyleSheet,
-  Image,
-  TouchableOpacity,
-  useWindowDimensions,
-  ScrollView,
+  SafeAreaView,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useRoute } from '@react-navigation/native';
 
-const App = () => {
-  const [category, setCategory] = useState([]);
+const HomePage = () => {
+  const route = useRoute();
+  const { categoryId, categoryName } = route.params || {};
+
+  const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const { width } = useWindowDimensions();
-  const imageSize = width / 4.2;
-  const navigation = useNavigation();
-
-  const getCategory = async () => {
+  const getProductsByCategory = async () => {
     try {
-     debugger
-      const response = await fetch('http://product.sash.co.in/api/ProductCategory/category-by-id/1');
+      debugger
+      const response = await fetch( `http://product.sash.co.in/api/Product/category/id/${categoryId}`);
+      debugger
       const text = await response.text();
-      if (text) {
-        debugger
-        const data = JSON.parse(text);
-        setCategory(data.data || []);
-      } else {
-        console.warn('Empty response from API');
-      }
-    } catch (error) {
-      console.error('Error fetching category:', error.message);
+      debugger
+      const data = JSON.parse(text);
+      setProducts(data?.data || []);
+    } catch (err) {
+      setError('Failed to load products. Please try again later.');
+      console.error('Fetch error:', err);
     } finally {
       setLoading(false);
     }
@@ -41,80 +37,102 @@ const App = () => {
 
   useEffect(() => {
     debugger
-    getCategory();
-  }, []);
+    if (categoryId) {
+      debugger
+      getProductsByCategory();
+    }
+  }, [categoryId]);
 
-  const handleCategoryPress = (categoryItem) => {
-    debugger
-    navigation.navigate('HomePage', {
-      categoryId: categoryItem.id,
-      categoryName: categoryItem.name,
-      categoryImage: categoryItem?.productFile?.url,
-
-    });
-  };
-
+  debugger
   const renderItem = ({ item }) => (
-    <TouchableOpacity onPress={() => handleCategoryPress(item)} activeOpacity={0.7}>
-      <View style={[styles.card, { width: imageSize + 10 }]}>
-        <Image
-          source={{ uri: item?.productFile?.url }}
-          style={{
-            width: imageSize,
-            height: imageSize,
-            borderRadius: imageSize / 2,
-            marginBottom: 6,
-          }}
-          resizeMode="cover"
-        />
-        <Text style={[styles.text, { maxWidth: imageSize + 10 }]} numberOfLines={1}>
-          {item.name || 'N/A'}
-        </Text>
-      </View>
-    </TouchableOpacity>
+    <View style={styles.card}>
+      <Image
+        source={{ uri: item?.productFile?.url }}
+        style={styles.image}
+        resizeMode="cover"
+      />
+      <Text style={styles.productName}>{item.name}</Text>
+      <Text style={styles.productPrice}>₹{item.price}</Text>
+    </View>
   );
 
   return (
-    <ScrollView style={styles.scrollContainer}>
-      <View style={styles.container}>
-        {loading ? (
-          <ActivityIndicator size="large" color="#007bff" />
-        ) : (
-          <FlatList
-            data={category}
-            horizontal
-            scrollEnabled
-            nestedScrollEnabled
-            showsHorizontalScrollIndicator={false}
-            keyExtractor={(item) => item.id.toString()}
-            renderItem={renderItem}
-          />
-        )}
-      </View>
-    </ScrollView>
+    <SafeAreaView style={styles.container}>
+      <Text style={styles.heading}>
+        Category: {categoryName || 'Unknown'}
+      </Text>
+
+      {loading ? (
+        <ActivityIndicator size="large" color="#007bff" style={styles.loader} />
+      ) : error ? (
+        <Text style={styles.errorText}>{error}</Text>
+      ) : products.length === 0 ? (
+        <Text style={styles.noDataText}>No products found in this category.</Text>
+      ) : (
+        <FlatList
+          data={products}
+          keyExtractor={(item) => item.id?.toString()}
+          renderItem={renderItem}
+          contentContainerStyle={styles.listContainer}
+        />
+      )}
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  scrollContainer: {
-    flex: 1,
-    backgroundColor: 'white',
-  },
   container: {
-    paddingTop: 16,
-    paddingHorizontal: 12,
+    flex: 1,
+    padding: 16,
+    backgroundColor: '#fff',
+  },
+  heading: {
+    fontSize: 20,
+    fontWeight: '600',
+    marginBottom: 10,
+    color: '#333',
+  },
+  loader: {
+    marginTop: 50,
   },
   card: {
-    alignItems: 'center',
-    marginRight: 10,
-    padding: 5,
-    marginTop: 10,
+    marginBottom: 12,
+    borderRadius: 10,
+    overflow: 'hidden',
+    backgroundColor: '#f9f9f9',
+    elevation: 2,
   },
-  text: {
+  image: {
+    width: '100%',
+    height: 180,
+  },
+  productName: {
+    fontSize: 16,
+    fontWeight: '500',
+    marginTop: 8,
+    marginHorizontal: 10,
+  },
+  productPrice: {
     fontSize: 14,
+    color: '#888',
+    marginBottom: 10,
+    marginHorizontal: 10,
+  },
+  errorText: {
+    color: 'red',
+    fontSize: 16,
+    marginTop: 20,
     textAlign: 'center',
-    fontWeight: '600',
+  },
+  noDataText: {
+    fontSize: 16,
+    marginTop: 20,
+    textAlign: 'center',
+    color: '#666',
+  },
+  listContainer: {
+    paddingBottom: 20,
   },
 });
 
-export default App;
+export default HomePage;

@@ -11,30 +11,27 @@ import {
   ScrollView,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-
+import HomePage from '../HomePage'; // Adjust the import path as necessary
 
 const Category = () => {
-  const [category, setCategory] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const { width } = useWindowDimensions();
   const imageSize = width / 4.2;
   const navigation = useNavigation();
 
-  const getCategory = async () => {
+  const getCategories = async () => {
     try {
-        debugger
+      debugger
       const response = await fetch('http://product.sash.co.in/api/ProductCategory/category-list');
       const text = await response.text();
-      if (text) {
-        debugger
-        const data = JSON.parse(text);
-        setCategory(data.data || []);
-      } else {
-        console.warn('Empty response from API');
-      }
+      const data = text ? JSON.parse(text) : {};
+      setCategories(data.data || []);
     } catch (error) {
       console.error('Error fetching category:', error.message);
+      setError('Failed to load categories.');
     } finally {
       setLoading(false);
     }
@@ -42,7 +39,7 @@ const Category = () => {
 
   useEffect(() => {
     debugger
-    getCategory();
+    getCategories();
   }, []);
 
   const handleCategoryPress = (categoryItem) => {
@@ -55,7 +52,10 @@ const Category = () => {
   };
 
   const renderItem = ({ item }) => (
-    <TouchableOpacity onPress={() => handleCategoryPress(item)} activeOpacity={0.7}>
+    <TouchableOpacity
+      onPress={() => handleCategoryPress(item)}
+      activeOpacity={0.7}
+    >
       <View style={[styles.card, { width: imageSize + 10 }]}>
         <Image
           source={{ uri: item?.productFile?.url }}
@@ -77,20 +77,25 @@ const Category = () => {
   return (
     <ScrollView style={styles.scrollContainer}>
       <View style={styles.container}>
+        <Text style={styles.title}>Select a Category</Text>
         {loading ? (
-          <ActivityIndicator size="large" color="#007bff" />
+          <ActivityIndicator size="large" color="#007bff" style={{ marginTop: 20 }} />
+        ) : error ? (
+          <Text style={styles.errorText}>{error}</Text>
+        ) : categories.length === 0 ? (
+          <Text style={styles.noDataText}>No categories available.</Text>
         ) : (
           <FlatList
-            data={category}
+            data={categories}
             horizontal
-            scrollEnabled
-            nestedScrollEnabled
             showsHorizontalScrollIndicator={false}
             keyExtractor={(item) => item.id.toString()}
             renderItem={renderItem}
+            contentContainerStyle={styles.flatListContent}
           />
         )}
       </View>
+      <HomePage />
     </ScrollView>
   );
 };
@@ -98,15 +103,20 @@ const Category = () => {
 const styles = StyleSheet.create({
   scrollContainer: {
     flex: 1,
-    backgroundColor: 'white',
+    backgroundColor: '#fff',
   },
   container: {
     paddingTop: 16,
     paddingHorizontal: 12,
   },
+  title: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 10,
+  },
   card: {
     alignItems: 'center',
-    marginRight: 10,
+    marginRight: 12,
     padding: 5,
     marginTop: 10,
   },
@@ -114,6 +124,21 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textAlign: 'center',
     fontWeight: '600',
+  },
+  errorText: {
+    fontSize: 16,
+    color: 'red',
+    textAlign: 'center',
+    marginTop: 20,
+  },
+  noDataText: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    marginTop: 20,
+  },
+  flatListContent: {
+    paddingBottom: 10,
   },
 });
 

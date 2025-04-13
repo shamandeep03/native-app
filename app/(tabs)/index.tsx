@@ -1,7 +1,7 @@
 import { View, StyleSheet } from "react-native";
 import React from "react";
 
-import Coupon from "./src/Coupon";
+ import Coupon from "./src/Coupon";
 
  import Add_To_Card from "./Add_To_Card";
 // import BackgroundServices from "./BackgroundServices";
@@ -9,7 +9,6 @@ import Coupon from "./src/Coupon";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
 const Stack = createNativeStackNavigator();
-
 
 const Index = () => {
   return (
@@ -20,7 +19,8 @@ const Index = () => {
           component={Coupon}
           options={{ headerShown: false }}
         />
-     
+   
+        
         {/* <Stack.Screen
           name="BackgroundServices"
           component={BackgroundServices}
