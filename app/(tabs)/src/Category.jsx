@@ -11,16 +11,15 @@ import {
   ScrollView,
 } from 'react-native';
 
-import HomePage from './HomePage';
-import { useNavigation } from '@react-navigation/native';
+import HomePage from "../src/HomePage"; // Make sure path is correct
 
 const Category = () => {
   const [category, setCategory] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedCategory, setSelectedCategory] = useState(null);
 
   const { width } = useWindowDimensions();
   const imageSize = width / 4.2;
-  const navigation = useNavigation();
 
   const getCategory = async () => {
     try {
@@ -44,11 +43,7 @@ const Category = () => {
   }, []);
 
   const handleCategoryPress = (categoryItem) => {
-    navigation.navigate('HomePage', {
-      categoryId: categoryItem.id,
-      categoryName: categoryItem.name,
-      categoryImage: categoryItem?.productFile?.url,
-    });
+    setSelectedCategory(categoryItem);
   };
 
   const renderItem = ({ item }) => (
@@ -57,8 +52,8 @@ const Category = () => {
         <Image
           source={{ uri: item?.productFile?.url }}
           style={{
-            width: imageSize,
-            height: imageSize,
+            width: 100,
+            height: 100,
             borderRadius: imageSize / 2,
             marginBottom: 6,
           }}
@@ -86,7 +81,14 @@ const Category = () => {
           />
         )}
       </View>
-      <HomePage />
+
+      {/* 👇👇 Show HomePage below selected category */}
+      {selectedCategory && (
+        <HomePage
+          categoryId={selectedCategory.id}
+          categoryName={selectedCategory.name}
+        />
+      )}
     </ScrollView>
   );
 };
@@ -105,6 +107,7 @@ const styles = StyleSheet.create({
     marginRight: 10,
     padding: 5,
     marginTop: 10,
+  
   },
   text: {
     fontSize: 14,

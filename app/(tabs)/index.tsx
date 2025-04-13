@@ -4,7 +4,7 @@ import React from "react";
  import Coupon from "./src/Coupon";
 
  import Add_To_Card from "./Add_To_Card";
-import HomePage from "./src/HomePage";
+
 
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
@@ -20,11 +20,7 @@ const Index = () => {
           options={{ headerShown: false }}
         />
    
-   <Stack.Screen
-          name="HomePage"
-          component={HomePage}
-          options={{ headerShown: false }}
-        />
+
         {/* <Stack.Screen
           name="BackgroundServices"
           component={BackgroundServices}
