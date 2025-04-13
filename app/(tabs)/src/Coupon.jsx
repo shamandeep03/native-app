@@ -7,7 +7,6 @@ import {
   StyleSheet,
   Image,
   TouchableOpacity,
-  useWindowDimensions,
 } from 'react-native';
 
 import Category from '../src/Category'; // Make sure the path is correct
@@ -18,7 +17,6 @@ const Coupon = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const flatListRef = useRef(null);
 
-  const { width } = useWindowDimensions();
 
   const getCoupon = async () => {
     try {

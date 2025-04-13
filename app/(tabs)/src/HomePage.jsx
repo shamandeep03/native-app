@@ -18,48 +18,46 @@ const HomePage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+
   const getProductsByCategory = async () => {
     try {
-      debugger
-      const response = await fetch( `http://product.sash.co.in/api/Product/category/id/${categoryId}`);
-      debugger
+      const response = await fetch(`http://product.sash.co.in/api/Product/category/${categoryId}`);
       const text = await response.text();
-      debugger
       const data = JSON.parse(text);
+
       setProducts(data?.data || []);
-    } catch (err) {
-      setError('Failed to load products. Please try again later.');
-      console.error('Fetch error:', err);
+    } catch (error) {
+      console.error('Error fetching products:', error.message);
+      setError('Products feaching error ');
     } finally {
       setLoading(false);
     }
   };
 
+  
   useEffect(() => {
-    debugger
     if (categoryId) {
-      debugger
       getProductsByCategory();
     }
   }, [categoryId]);
 
-  debugger
+
   const renderItem = ({ item }) => (
     <View style={styles.card}>
       <Image
-        source={{ uri: item?.productFile?.url }}
+        source={{ uri: item?.productFiles?.imageUrl }}
         style={styles.image}
         resizeMode="cover"
       />
-      <Text style={styles.productName}>{item.name}</Text>
-      <Text style={styles.productPrice}>₹{item.price}</Text>
+      <Text style={styles.name}>{item.name}</Text>
+      <Text style={styles.price}>₹{item.id}</Text>
     </View>
   );
 
   return (
     <SafeAreaView style={styles.container}>
       <Text style={styles.heading}>
-        Category: {categoryName || 'Unknown'}
+        {categoryName || 'Category'}  Products
       </Text>
 
       {loading ? (
@@ -67,15 +65,16 @@ const HomePage = () => {
       ) : error ? (
         <Text style={styles.errorText}>{error}</Text>
       ) : products.length === 0 ? (
-        <Text style={styles.noDataText}>No products found in this category.</Text>
+        <Text style={styles.noDataText}> Product</Text>
       ) : (
         <FlatList
           data={products}
           keyExtractor={(item) => item.id?.toString()}
           renderItem={renderItem}
-          contentContainerStyle={styles.listContainer}
+          contentContainerStyle={styles.listContent}
         />
       )}
+  
     </SafeAreaView>
   );
 };
@@ -89,48 +88,40 @@ const styles = StyleSheet.create({
   heading: {
     fontSize: 20,
     fontWeight: '600',
-    marginBottom: 10,
-    color: '#333',
+    marginBottom: 12,
   },
   loader: {
-    marginTop: 50,
+    marginTop: 20,
   },
-  card: {
-    marginBottom: 12,
-    borderRadius: 10,
-    overflow: 'hidden',
-    backgroundColor: '#f9f9f9',
-    elevation: 2,
-  },
+
   image: {
-    width: '100%',
-    height: 180,
+    width: 200,
+    height: 200,
+    borderRadius: 8,
+    marginBottom: 8,
   },
-  productName: {
+  name: {
     fontSize: 16,
     fontWeight: '500',
-    marginTop: 8,
-    marginHorizontal: 10,
   },
-  productPrice: {
+  price: {
     fontSize: 14,
-    color: '#888',
-    marginBottom: 10,
-    marginHorizontal: 10,
+    color: '#555',
+    marginTop: 4,
   },
   errorText: {
-    color: 'red',
     fontSize: 16,
-    marginTop: 20,
+    color: 'red',
     textAlign: 'center',
+    marginTop: 20,
   },
   noDataText: {
     fontSize: 16,
-    marginTop: 20,
+    color: '#777',
     textAlign: 'center',
-    color: '#666',
+    marginTop: 20,
   },
-  listContainer: {
+  listContent: {
     paddingBottom: 20,
   },
 });
