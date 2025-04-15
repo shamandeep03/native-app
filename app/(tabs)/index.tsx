@@ -3,7 +3,7 @@ import React from "react";
 
  import Coupon from "./src/Coupon";
 
- import Add_To_Card from "./Add_To_Card";
+//  import Add_To_Card from "./Add_To_Card";
 
 
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
@@ -27,11 +27,11 @@ const Index = () => {
           options={{ headerShown: false }}
         /> */}
 
-        <Stack.Screen
+        {/* <Stack.Screen
           name="Add_To_Card"
           component={Add_To_Card}
           options={{ headerShown: false }}
-        />
+        /> */}
       </Stack.Navigator>
     </View>
   );

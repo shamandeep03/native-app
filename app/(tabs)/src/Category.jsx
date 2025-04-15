@@ -11,7 +11,7 @@ import {
   ScrollView,
 } from 'react-native';
 
-import HomePage from "../src/HomePage"; // Make sure path is correct
+import HomePage from '../src/HomePage'; // Make sure the path is correct
 
 const Category = () => {
   const [category, setCategory] = useState([]);
@@ -27,7 +27,13 @@ const Category = () => {
       const text = await response.text();
       if (text) {
         const data = JSON.parse(text);
-        setCategory(data.data || []);
+        const categoryData = data.data || [];
+        setCategory(categoryData);
+
+        // ✅ Auto-select the first category after loading
+        if (categoryData.length > 0) {
+          setSelectedCategory(categoryData[0]);
+        }
       } else {
         console.warn('Empty response from API');
       }
@@ -48,13 +54,20 @@ const Category = () => {
 
   const renderItem = ({ item }) => (
     <TouchableOpacity onPress={() => handleCategoryPress(item)} activeOpacity={0.7}>
-      <View style={[styles.card, { width: imageSize + 10 }]}>
+      <View
+        style={[
+          styles.card,
+          { width: imageSize + 10 },
+          selectedCategory?.id === item.id && styles.selectedCard, // Highlight selected
+        ]}
+      >
         <Image
           source={{ uri: item?.productFile?.url }}
           style={{
+            
             width: 100,
             height: 100,
-            borderRadius: imageSize / 2,
+            borderRadius: 100,
             marginBottom: 6,
           }}
           resizeMode="cover"
@@ -82,11 +95,12 @@ const Category = () => {
         )}
       </View>
 
-      {/* 👇👇 Show HomePage below selected category */}
+      {/* Show HomePage for selected category */}
       {selectedCategory && (
         <HomePage
           categoryId={selectedCategory.id}
           categoryName={selectedCategory.name}
+          
         />
       )}
     </ScrollView>
@@ -107,13 +121,16 @@ const styles = StyleSheet.create({
     marginRight: 10,
     padding: 5,
     marginTop: 10,
-  
   },
+
   text: {
     fontSize: 14,
     textAlign: 'center',
     fontWeight: '600',
   },
+  Image:{
+    borderRadius: 100,
+  }
 });
 
 export default Category;
