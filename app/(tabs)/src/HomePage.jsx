@@ -81,6 +81,7 @@ const HomePage = ({ categoryId, categoryName, categoryImage }) => {
           contentContainerStyle={styles.listContent}
         />
       )}
+     
     </View>
   );
 };
