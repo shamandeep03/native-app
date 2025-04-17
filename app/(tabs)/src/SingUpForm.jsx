@@ -7,10 +7,10 @@ import {
   Alert,
   StyleSheet,
   ScrollView,
-  Dimensions,
+  Image
 } from 'react-native';
 
-const { height, width } = Dimensions.get('window');
+
 
 const SignupForm = ({ navigation }) => {
   const [form, setForm] = useState({
@@ -33,11 +33,12 @@ const SignupForm = ({ navigation }) => {
       age: parseInt(form.age),
       roleId: 1, // You can change this as needed
       statusId: 1,
-      profileImageId: 1,
+      profileImageId: 447,
       id: 0,
     };
 
     try {
+      debugger
       const response = await fetch('http://product.sash.co.in/api/Account/sign-up', {
         method: 'POST',
         headers: {
@@ -47,8 +48,9 @@ const SignupForm = ({ navigation }) => {
       });
 
       if (response.ok) {
+        debugger
         Alert.alert('Success', 'Account created successfully!');
-        navigation.navigate('Login');
+        navigation.navigate('LoginForm');
       } else {
         Alert.alert('Error', 'Something went wrong during signup');
       }
@@ -59,6 +61,12 @@ const SignupForm = ({ navigation }) => {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
+        <View style={styles.logoContainer}>
+                <Image
+                  source={{ uri: 'https://res.cloudinary.com/duxekwjna/image/upload/v1744828895/djzkpedj63pxvcb7x8ng.jpg' }}
+                  style={styles.logo}
+                />
+              </View>
       <View style={styles.card}>
         <Text style={styles.title}>Sign Up</Text>
         <TextInput placeholder="First Name" style={styles.input} onChangeText={val => handleChange('firstName', val)} />
@@ -89,6 +97,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingVertical: 40,
+    backgroundColor: 'white',
+   
   },
   card: {
     backgroundColor: '#eee',
@@ -135,5 +145,18 @@ const styles = StyleSheet.create({
   linkText: {
     color: '#0066cc',
     fontWeight: 'bold',
+  },
+  logoContainer: {
+    marginBottom: -30,
+    alignItems: 'center',
+  },
+  logo: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    resizeMode: 'contain',
+    borderWidth: 2,
+    marginBottom: 30,
+    
   },
 });
