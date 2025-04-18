@@ -5,7 +5,8 @@ import React from "react";
  import LoginForm from "./src/LoginForm";
  import SingUpForm from "./src/SingUpForm";
 // import Icon_Navigation from "./src/Icon_Navigation";
-//  import Add_To_Card from "./Add_To_Card";
+ import Add_To_Cart from "./Add_To_Cart";
+ import My_Cart from "./src/My_Cart";
 
 
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
@@ -16,19 +17,31 @@ const Index = () => {
   return (
     <View style={styles.container}>
       <Stack.Navigator initialRouteName="LoginForm">
-      <Stack.Screen
+      {/* <Stack.Screen
           name="LoginForm"
           component={LoginForm}
           options={{ headerShown: false }}
-        />
-         <Stack.Screen
+        /> */}
+         {/* <Stack.Screen
           name="SignUpForm"
           component={SingUpForm}
           options={{ headerShown: false }}
-        />
+        /> */}
       <Stack.Screen
           name="Coupon"
           component={Coupon}
+          options={{ headerShown: false }}
+        />
+        
+        <Stack.Screen
+          name="Add_To_Cart"
+          component={Add_To_Cart}
+          options={{ headerShown: false }}
+        />
+
+        <Stack.Screen
+          name="My_Cart"
+          component={My_Cart}
           options={{ headerShown: false }}
         />
      {/* <Stack.Screen
@@ -43,11 +56,6 @@ const Index = () => {
           options={{ headerShown: false }}
         /> */}
 
-        {/* <Stack.Screen
-          name="Add_To_Card"
-          component={Add_To_Card}
-          options={{ headerShown: false }}
-        /> */}
       </Stack.Navigator>
     </View>
   );

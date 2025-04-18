@@ -6,12 +6,15 @@ import {
   Image,
   ActivityIndicator,
   StyleSheet,
+  TouchableOpacity,
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 
 const HomePage = ({ categoryId, categoryName, categoryImage }) => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const navigation = useNavigation();
 
   const getProductsByCategory = async () => {
     try {
@@ -40,7 +43,21 @@ const HomePage = ({ categoryId, categoryName, categoryImage }) => {
   }, [categoryId]);
 
   const renderItem = ({ item }) => (
-    <View style={styles.card}>
+    <TouchableOpacity
+      style={styles.card}
+      onPress={() =>
+        navigation.navigate('Add_To_Cart', {
+          item: {
+            title: item?.productFiles?.url,
+            Name: item.name,
+            Price: `₹${item.id}`, // replace with correct price if available
+            Offer: '80% off',
+            Free: 'Free Delivery',
+            TreadingNow: 'Trending Now',
+          },
+        })
+      }
+    >
       <Image
         source={{ uri: item?.productFiles?.url }}
         style={styles.image}
@@ -48,12 +65,11 @@ const HomePage = ({ categoryId, categoryName, categoryImage }) => {
       />
       <Text style={styles.name}>{item.name}</Text>
       <Text style={styles.price}>₹{item.id}</Text>
-    </View>
+    </TouchableOpacity>
   );
 
   return (
     <View style={styles.container}>
-      {/* ✅ Category Header with Image */}
       <View style={styles.categoryHeader}>
         {categoryImage && (
           <Image
@@ -65,7 +81,6 @@ const HomePage = ({ categoryId, categoryName, categoryImage }) => {
         <Text style={styles.heading}>{categoryName || 'Category'}</Text>
       </View>
 
-      {/* ✅ States: Loader / Error / No Data / Data */}
       {loading ? (
         <ActivityIndicator size="large" color="#007bff" style={styles.loader} />
       ) : error ? (
@@ -81,7 +96,6 @@ const HomePage = ({ categoryId, categoryName, categoryImage }) => {
           contentContainerStyle={styles.listContent}
         />
       )}
-     
     </View>
   );
 };

@@ -9,10 +9,11 @@ import {
   ScrollView,
   Image
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 
+const SignupForm = () => {
+  const navigation = useNavigation();
 
-
-const SignupForm = ({ navigation }) => {
   const [form, setForm] = useState({
     firstName: '',
     lastName: '',
@@ -27,18 +28,32 @@ const SignupForm = ({ navigation }) => {
     setForm({ ...form, [field]: value });
   };
 
+  const validateForm = () => {
+    const { firstName, lastName, age, email, phoneNumber, gender, password } = form;
+    if (!firstName || !lastName || !age || !email || !phoneNumber || !gender || !password) {
+      Alert.alert('Error', 'Please fill in all fields.');
+      return false;
+    }
+    if (isNaN(age)) {
+      Alert.alert('Error', 'Age must be a number.');
+      return false;
+    }
+    return true;
+  };
+
   const handleSignup = async () => {
+    if (!validateForm()) return;
+
     const payload = {
       ...form,
       age: parseInt(form.age),
-      roleId: 1, // You can change this as needed
+      roleId: 1,
       statusId: 1,
       profileImageId: 447,
       id: 0,
     };
 
     try {
-      debugger
       const response = await fetch('http://product.sash.co.in/api/Account/sign-up', {
         method: 'POST',
         headers: {
@@ -48,31 +63,36 @@ const SignupForm = ({ navigation }) => {
       });
 
       if (response.ok) {
-        debugger
         Alert.alert('Success', 'Account created successfully!');
-        navigation.navigate('LoginForm');
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'LoginForm' }],
+        });
       } else {
-        Alert.alert('Error', 'Something went wrong during signup');
+        const errorText = await response.text();
+        console.error('Signup failed:', errorText);
+        Alert.alert('Error', 'Signup failed: ' + errorText);
       }
     } catch (error) {
+      console.error('Error:', error.message);
       Alert.alert('Error', error.message);
     }
   };
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-        <View style={styles.logoContainer}>
-                <Image
-                  source={{ uri: 'https://res.cloudinary.com/duxekwjna/image/upload/v1744828895/djzkpedj63pxvcb7x8ng.jpg' }}
-                  style={styles.logo}
-                />
-              </View>
+      <View style={styles.logoContainer}>
+        <Image
+          source={{ uri: 'https://res.cloudinary.com/duxekwjna/image/upload/v1744828895/djzkpedj63pxvcb7x8ng.jpg' }}
+          style={styles.logo}
+        />
+      </View>
       <View style={styles.card}>
         <Text style={styles.title}>Sign Up</Text>
         <TextInput placeholder="First Name" style={styles.input} onChangeText={val => handleChange('firstName', val)} />
         <TextInput placeholder="Last Name" style={styles.input} onChangeText={val => handleChange('lastName', val)} />
         <TextInput placeholder="Age" keyboardType="numeric" style={styles.input} onChangeText={val => handleChange('age', val)} />
-        <TextInput placeholder="Email" style={styles.input} onChangeText={val => handleChange('email', val)} />
+        <TextInput placeholder="Email" style={styles.input} keyboardType="email-address" onChangeText={val => handleChange('email', val)} />
         <TextInput placeholder="Phone Number" keyboardType="phone-pad" style={styles.input} onChangeText={val => handleChange('phoneNumber', val)} />
         <TextInput placeholder="Gender" style={styles.input} onChangeText={val => handleChange('gender', val)} />
         <TextInput placeholder="Password" secureTextEntry style={styles.input} onChangeText={val => handleChange('password', val)} />
@@ -82,7 +102,10 @@ const SignupForm = ({ navigation }) => {
         </TouchableOpacity>
 
         <Text style={styles.loginLink}>
-          Already have an account? <Text style={styles.linkText} onPress={() => navigation.navigate('LoginForm')}>Login</Text>
+          Already have an account?{' '}
+          <Text style={styles.linkText} onPress={() => navigation.navigate('LoginForm')}>
+            Login
+          </Text>
         </Text>
       </View>
     </ScrollView>
@@ -98,7 +121,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 40,
     backgroundColor: 'white',
-   
   },
   card: {
     backgroundColor: '#eee',
@@ -157,6 +179,5 @@ const styles = StyleSheet.create({
     resizeMode: 'contain',
     borderWidth: 2,
     marginBottom: 30,
-    
   },
 });
