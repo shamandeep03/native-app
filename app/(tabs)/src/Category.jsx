@@ -13,6 +13,8 @@ import {
 
 import HomePage from '../src/HomePage'; // Make sure the path is correct
 
+
+
 const Category = () => {
   const [category, setCategory] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -81,6 +83,7 @@ const Category = () => {
 
   return (
     <ScrollView style={styles.scrollContainer}>
+     
       <View style={styles.container}>
         {loading ? (
           <ActivityIndicator size="large" color="#007bff" />

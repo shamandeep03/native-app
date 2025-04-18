@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -11,12 +11,14 @@ import {
   Dimensions,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { usePathname } from 'expo-router'; // Import usePathname to get the current path
 
 const { height, width } = Dimensions.get('window');
 
 const LoginForm = ({ navigation }) => {
   const [userName, setUserName] = useState('');
   const [password, setPassword] = useState('');
+  const pathname = usePathname(); // Get the current route path
 
   const handleLogin = async () => {
     if (!userName || !password) {
@@ -48,7 +50,6 @@ const LoginForm = ({ navigation }) => {
 
   return (
     <View style={styles.wrapper}>
-      
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
         <View style={styles.logoContainer}>
           <Image
@@ -76,7 +77,12 @@ const LoginForm = ({ navigation }) => {
           <TouchableOpacity style={styles.button} onPress={handleLogin}>
             <Text style={styles.buttonText}>Log In</Text>
           </TouchableOpacity>
-          <Text style={styles.SingUp}>Don't have an account? <Text style={styles.nextpage} onPress={() => navigation.navigate('SignUpForm')}>SingUp</Text></Text>
+          <Text style={styles.SingUp}>
+            Don't have an account?{' '}
+            <Text style={styles.nextpage} onPress={() => navigation.navigate('SignUpForm')}>
+              SingUp
+            </Text>
+          </Text>
         </View>
       </ScrollView>
     </View>
@@ -154,11 +160,12 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontWeight: 'bold',
   },
-    SingUp: {
-        marginTop: 25,
-    },
-    nextpage: {
-        color: '#0066cc',
-        fontWeight: 'bold',
-    }
+  SingUp: {
+    marginTop: 25,
+  },
+  nextpage: {
+    color: '#0066cc',
+    fontWeight: 'bold',
+  },
 });
+

@@ -13,6 +13,7 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import Category from '../src/Category';
+import SearchBar from './SearchBar';
 
 const Coupon = () => {
   const [coupons, setCoupons] = useState([]);
@@ -21,6 +22,7 @@ const Coupon = () => {
   const flatListRef = useRef(null);
 
   const getCoupons = async () => {
+
     setLoading(true);
     try {
       const token = await AsyncStorage.getItem('userToken');
@@ -29,6 +31,7 @@ const Coupon = () => {
         return;
       }
 
+     
       const response = await fetch(
         'http://product.sash.co.in/api/ProductCategory/category-list',
         {
@@ -79,6 +82,7 @@ const Coupon = () => {
 
   return (
     <ScrollView style={styles.container}>
+      <SearchBar/>
       {loading ? (
         <ActivityIndicator size="large" color="#007bff" />
       ) : (

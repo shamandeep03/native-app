@@ -4,7 +4,7 @@ import React from "react";
  import Coupon from "./src/Coupon";
  import LoginForm from "./src/LoginForm";
  import SingUpForm from "./src/SingUpForm";
-// import Icon_Navigation from "./src/Icon_Navigation";
+
  import Add_To_Cart from "./Add_To_Cart";
  import My_Cart from "./src/My_Cart";
 
@@ -17,16 +17,16 @@ const Index = () => {
   return (
     <View style={styles.container}>
       <Stack.Navigator initialRouteName="LoginForm">
-      {/* <Stack.Screen
+      <Stack.Screen
           name="LoginForm"
           component={LoginForm}
           options={{ headerShown: false }}
-        /> */}
-         {/* <Stack.Screen
+        />
+         <Stack.Screen
           name="SignUpForm"
           component={SingUpForm}
           options={{ headerShown: false }}
-        /> */}
+        />
       <Stack.Screen
           name="Coupon"
           component={Coupon}
@@ -44,11 +44,7 @@ const Index = () => {
           component={My_Cart}
           options={{ headerShown: false }}
         />
-     {/* <Stack.Screen
-          name="Icon_Navigation"
-          component={Icon_Navigation}
-          options={{ headerShown: false }}
-        /> */}
+   
 
         {/* <Stack.Screen
           name="BackgroundServices"

@@ -1,37 +1,125 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
-import * as SplashScreen from 'expo-splash-screen';
-import { useEffect } from 'react';
-import 'react-native-reanimated';
+import React, { useState } from 'react';
+import { View, StyleSheet, Text, TouchableOpacity } from 'react-native';
+import { Slot, useRouter, usePathname } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 
-import { useColorScheme } from '@/hooks/useColorScheme';
+export default function TabsLayout() {
+  const [searchTerm, setSearchTerm] = useState('');
+  const router = useRouter();
+  const pathname = usePathname();
+  const cartItemCount = 1;
+  const showCategoriesDot = true;
 
-// Prevent the splash screen from auto-hiding before asset loading is complete.
-SplashScreen.preventAutoHideAsync();
-
-export default function RootLayout() {
-  const colorScheme = useColorScheme();
-  const [loaded] = useFonts({
-    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
-  });
-
-  useEffect(() => {
-    if (loaded) {
-      SplashScreen.hideAsync();
-    }
-  }, [loaded]);
-
-  if (!loaded) {
-    return null;
-  }
+  // Update the routes to match exact paths for login and signup
+  const hideFooterOnRoutes = [
+    '/(tabs)/src/LoginForm',
+    '/(tabs)/src/SignUpForm',
+  ];
+  const hideFooter = hideFooterOnRoutes.includes(pathname); // Direct match with pathname
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="+not-found" />
-      </Stack>
-    </ThemeProvider>
+    <View style={styles.container}>
+      {/* Page Content */}
+      <View style={styles.content}>
+        <Slot />
+      </View>
+
+      {/* Bottom Footer Navigation */}
+      {!hideFooter && (
+        <View style={styles.footer}>
+          <FooterIcon name="home-outline" label="Home" onPress={() => router.push('/')} />
+          <FooterIcon name="search-outline" label="Search" onPress={() => router.push('/(tabs)/src/SearchBar')} />
+          <FooterIcon name="grid-outline" label="Categories" onPress={() => router.push('/(tabs)/src/Category')} dot={showCategoriesDot} />
+          <FooterIcon name="person-outline" label="Account" onPress={() => router.push('/(tabs)/src/HomePage')} />
+          <FooterIcon name="cart-outline" label="Cart" onPress={() => router.push('/(tabs)/src/My_Cart')} badge={cartItemCount} />
+        </View>
+      )}
+    </View>
   );
 }
+
+const FooterIcon = ({
+  name,
+  label,
+  onPress,
+  badge = 0,
+  dot = false,
+}: {
+  name: string;
+  label: string;
+  onPress: () => void;
+  badge?: number;
+  dot?: boolean;
+}) => (
+  <TouchableOpacity style={styles.iconContainer} onPress={onPress}>
+    <View>
+      <Ionicons name={name as any} size={24} color="black" />
+      {dot && <View style={styles.redDot} />}
+      {badge > 0 && (
+        <View style={styles.badge}>
+          <Text style={styles.badgeText}>{badge}</Text>
+        </View>
+      )}
+    </View>
+    <Text style={styles.iconLabel}>{label}</Text>
+  </TouchableOpacity>
+);
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  content: {
+    flex: 1,
+    paddingBottom: 60, // Leave space for footer
+  },
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    paddingVertical: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#ddd',
+    backgroundColor: '#fff',
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 60,
+  },
+  iconContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  iconLabel: {
+    fontSize: 12,
+    color: 'black',
+    marginTop: 2,
+  },
+  redDot: {
+    position: 'absolute',
+    top: -2,
+    right: -6,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: 'red',
+  },
+  badge: {
+    position: 'absolute',
+    top: -4,
+    right: -10,
+    backgroundColor: 'red',
+    borderRadius: 10,
+    paddingHorizontal: 5,
+    paddingVertical: 1,
+    minWidth: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  badgeText: {
+    color: 'white',
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
+});
