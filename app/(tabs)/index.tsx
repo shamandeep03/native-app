@@ -17,7 +17,7 @@ const Index = () => {
   return (
     <View style={styles.container}>
       <Stack.Navigator initialRouteName="LoginForm">
-      <Stack.Screen
+      {/* <Stack.Screen
           name="LoginForm"
           component={LoginForm}
           options={{ headerShown: false }}
@@ -26,7 +26,7 @@ const Index = () => {
           name="SignUpForm"
           component={SingUpForm}
           options={{ headerShown: false }}
-        />
+        /> */}
       <Stack.Screen
           name="Coupon"
           component={Coupon}

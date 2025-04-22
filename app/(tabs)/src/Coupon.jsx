@@ -13,7 +13,7 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import Category from '../src/Category';
-import SearchBar from './SearchBar';
+
 
 const Coupon = () => {
   const [coupons, setCoupons] = useState([]);
@@ -82,7 +82,7 @@ const Coupon = () => {
 
   return (
     <ScrollView style={styles.container}>
-      <SearchBar/>
+    
       {loading ? (
         <ActivityIndicator size="large" color="#007bff" />
       ) : (
