@@ -2,11 +2,9 @@ import { View, StyleSheet } from "react-native";
 import React from "react";
 
  import Coupon from "./src/Coupon";
- import LoginForm from "./src/LoginForm";
- import SingUpForm from "./src/SingUpForm";
+import LoginForm from '../(auth)/LoginForm';
+import AddToCartScreen from "./src/Add_To_Cart";
 
- import Add_To_Cart from "./Add_To_Cart";
- import My_Cart from "./src/My_Cart";
 
 
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
@@ -17,12 +15,12 @@ const Index = () => {
   return (
     <View style={styles.container}>
       <Stack.Navigator initialRouteName="LoginForm">
-      {/* <Stack.Screen
+      <Stack.Screen
           name="LoginForm"
           component={LoginForm}
           options={{ headerShown: false }}
         />
-         <Stack.Screen
+         {/* <Stack.Screen
           name="SignUpForm"
           component={SingUpForm}
           options={{ headerShown: false }}
@@ -32,18 +30,7 @@ const Index = () => {
           component={Coupon}
           options={{ headerShown: false }}
         />
-        
-        <Stack.Screen
-          name="Add_To_Cart"
-          component={Add_To_Cart}
-          options={{ headerShown: false }}
-        />
-
-        <Stack.Screen
-          name="My_Cart"
-          component={My_Cart}
-          options={{ headerShown: false }}
-        />
+        <Stack.Screen name="Add_To_Cart" component={AddToCartScreen} />
    
 
         {/* <Stack.Screen

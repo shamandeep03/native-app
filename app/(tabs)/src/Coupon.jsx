@@ -1,4 +1,3 @@
-// Coupon.js
 import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
@@ -9,11 +8,13 @@ import {
   Image,
   TouchableOpacity,
   Alert,
+  Dimensions,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
 import Category from '../src/Category';
 
+
+const { width: screenWidth } = Dimensions.get('window');
 
 const Coupon = () => {
   const [coupons, setCoupons] = useState([]);
@@ -22,7 +23,6 @@ const Coupon = () => {
   const flatListRef = useRef(null);
 
   const getCoupons = async () => {
-
     setLoading(true);
     try {
       const token = await AsyncStorage.getItem('userToken');
@@ -31,7 +31,6 @@ const Coupon = () => {
         return;
       }
 
-     
       const response = await fetch(
         'http://product.sash.co.in/api/ProductCategory/category-list',
         {
@@ -57,7 +56,6 @@ const Coupon = () => {
     getCoupons();
   }, []);
 
-  // Auto‑scroll every 3s
   useEffect(() => {
     if (!coupons.length) return;
 
@@ -73,7 +71,7 @@ const Coupon = () => {
   const renderItem = ({ item }) => (
     <TouchableOpacity style={styles.card}>
       <Image
-        source={{ uri: item.productFile?.url }}
+        source={{ uri: item?.productFile?.url }}
         style={styles.image}
         resizeMode="cover"
       />
@@ -82,8 +80,7 @@ const Coupon = () => {
 
   return (
     <ScrollView style={styles.container}>
-    
-      {loading ? (
+      {/* {loading ? (
         <ActivityIndicator size="large" color="#007bff" />
       ) : (
         <FlatList
@@ -97,8 +94,9 @@ const Coupon = () => {
           scrollEnabled={false}
           onScrollToIndexFailed={() => {}}
         />
-      )}
+      )} */}
       <Category />
+      
     </ScrollView>
   );
 };
@@ -106,7 +104,19 @@ const Coupon = () => {
 export default Coupon;
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
-  card: { alignItems: 'center', paddingHorizontal: 12, marginTop: 20 },
-  image: { width: 380, height: 200, borderRadius: 10 },
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  card: {
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    marginTop: 20,
+    width: screenWidth,
+  },
+  image: {
+    width: screenWidth * 0.92,
+    height: screenWidth * 0.48,
+    borderRadius: 10,
+  },
 });

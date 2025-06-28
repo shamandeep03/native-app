@@ -3,6 +3,8 @@
     "name": "app-native",
     "slug": "app-native",
     "version": "1.0.0",
+     "jsEngine": "hermes",
+     
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "myapp",
@@ -11,7 +13,7 @@
       "image": "./assets/images/splash.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff",
-    "plugins": ["expo-dev-launcher"]
+    "plugins": ["expo-dev-launcher","expo-location"]
     },
     "ios": {
       "supportsTablet": true,

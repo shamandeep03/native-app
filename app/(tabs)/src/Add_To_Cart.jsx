@@ -24,6 +24,7 @@ const Add_To_Cart = () => {
   useEffect(() => {
     const fetchUserIdAndAddress = async () => {
       try {
+        debugger
         const userId = await AsyncStorage.getItem('userId');
         if (userId) {
           const parsedId = Number(userId);
@@ -33,7 +34,7 @@ const Add_To_Cart = () => {
           const addresses = await res.json();
 
           if (addresses && addresses.length > 0) {
-            setAddressId(addresses[0].id); // Assuming first is default
+            setAddressId(addresses[0].id); // Assuming the first is the default address
           } else {
             alert('No address found for this user!');
           }
@@ -58,19 +59,18 @@ const Add_To_Cart = () => {
 
     setLoading(true);
     const now = new Date().toISOString();
-  debugger
     const payload = {
+      id: 0, // Assuming it's generated on the server
       vendorProductId: item.vendorProductId,
       createdBy: createdBy,
       addressId: addressId,
-      count: 1,
+      count: 1, // Defaulting to 1, adjust if needed
       createdDateTime: now,
       modifiedBy: createdBy,
       modifiedDateTime: now,
     };
 
     try {
-      debugger
       const response = await fetch('http://product.sash.co.in/api/Cart', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -85,6 +85,7 @@ const Add_To_Cart = () => {
       }
     } catch (error) {
       alert('Something went wrong.');
+      console.error(error);
     } finally {
       setLoading(false);
     }
