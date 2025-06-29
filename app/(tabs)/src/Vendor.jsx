@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+// VendorScreen.js
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,45 +7,43 @@ import {
   Image,
   ActivityIndicator,
   StyleSheet,
+  TouchableOpacity,
+  Alert,
 } from 'react-native';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import { getCurrentCity } from './LocationService'; // Assume you have this file
 
-const Vendor = ({ cityName, categoryId, categoryName }) => {
+const Vendor = () => {
   const [vendors, setVendors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
+  const [cityName, setCityName] = useState(null);
   const navigation = useNavigation();
+  const route = useRoute();
 
-  const getVendors = async () => {
+  const { categoryId, categoryName } = route.params || {};
+
+  const getVendors = async (city) => {
     try {
       setLoading(true);
       setError(null);
       setVendors([]);
 
-      console.log('📍 City Name:', cityName);
-      console.log('📦 Category ID:', categoryId);
-
       const token = await AsyncStorage.getItem('userToken');
-      console.log('🔐 Token:', token);
 
-      if (!token || !cityName || !categoryId) {
+      if (!token || !city || !categoryId) {
         setError('Token, city name, or category ID is missing');
         return;
       }
 
-      const url = `http://product.sash.co.in/api/Vendor/vendors/by-city-category?cityName=${cityName}&categoryId=${categoryId}`;
-      console.log('📡 API URL:', url);
-
+      const url = `http://product.sash.co.in/api/Vendor/vendors/by-city-category?cityName=${city}&categoryId=${categoryId}`;
       const response = await axios.get(url, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-
-      console.log('📥 Full API Response:', response.data);
 
       const data = Array.isArray(response.data)
         ? response.data
@@ -54,11 +53,8 @@ const Vendor = ({ cityName, categoryId, categoryName }) => {
         setVendors(data);
       } else {
         setError('No vendors found for this city/category.');
-        setVendors([]);
       }
     } catch (err) {
-      console.error('❌ Vendor API Error:', err?.response?.data || err.message);
-      console.log('❌ Full Error Object:', err);
       setError('Failed to load vendors');
     } finally {
       setLoading(false);
@@ -66,31 +62,44 @@ const Vendor = ({ cityName, categoryId, categoryName }) => {
   };
 
   useEffect(() => {
-    if (cityName && categoryId) {
-      getVendors();
-    }
-  }, [cityName, categoryId]);
+    (async () => {
+      const city = await getCurrentCity();
+      setCityName(city);
+      if (city && categoryId) {
+        getVendors(city);
+      }
+    })();
+  }, [categoryId]);
 
   const renderItem = ({ item }) => (
-    <View style={styles.card}>
+    <TouchableOpacity
+      style={styles.card}
+      onPress={() =>
+        navigation.navigate('VendorProductScreen', {
+          vendorId: item.id,
+          categoryId,
+          vendorName: `${item.firstName} ${item.lastName}`,
+        })
+      }
+    >
       <Image
         source={{ uri: item?.profileImageUrl || 'https://via.placeholder.com/180' }}
         style={styles.image}
         resizeMode="cover"
       />
       <Text style={styles.name}>{item.firstName} {item.lastName}</Text>
-      <Text style={styles.subText}>📍 {item.location}</Text>
+      <Text style={styles.subText}>{item.location}</Text>
       <Text style={styles.subText}>Pincode: {item.pincode}</Text>
-      <Text style={styles.subText}>📞 {item.phoneNumber}</Text>
-      <Text style={styles.subText}>✉️ {item.email}</Text>
-    </View>
+      <Text style={styles.subText}>{item.phoneNumber}</Text>
+      <Text style={styles.subText}>{item.email}</Text>
+    </TouchableOpacity>
   );
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.heading}>
-          Vendors in <Text style={styles.city}>{cityName}</Text>
+          Vendors in <Text style={styles.city}>{cityName || '...'}</Text>
         </Text>
         <Text style={styles.subHeading}>Category: {categoryName}</Text>
       </View>
@@ -185,4 +194,3 @@ const styles = StyleSheet.create({
 });
 
 export default Vendor;
-s

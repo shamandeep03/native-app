@@ -24,8 +24,11 @@ const Category = () => {
   const { width } = useWindowDimensions();
   const imageSize = width / 4.2;
 
+  useEffect(() => {
+    getCategory();
+  }, []);
+
   const getCategory = async () => {
-    debugger
     try {
       const response = await fetch('http://product.sash.co.in/api/ProductCategory/category-list');
       const text = await response.text();
@@ -36,36 +39,33 @@ const Category = () => {
       }
     } catch (error) {
       console.error('Error fetching category:', error.message);
+      Alert.alert('Error', 'Could not load categories.');
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    debugger
-    getCategory();
-  }, []);
-
   const handleCategoryPress = async (categoryItem) => {
-    debugger
     try {
       setSelectedCategory(categoryItem);
 
       const city = await getCurrentCity();
 
       if (!city) {
-        Alert.alert('Location Error', 'Unable to get your city. Please allow location permission.');
+        Alert.alert(
+          'Location Error',
+          'Unable to get your city. Please enable GPS and location permission.'
+        );
         return;
       }
 
-    
       await AsyncStorage.setItem('cityName', city);
       await AsyncStorage.setItem('categoryId', categoryItem.id.toString());
       await AsyncStorage.setItem('categoryName', categoryItem.name);
-
       setCityName(city);
     } catch (error) {
-      console.error('Location error:', error);
+      console.error('Location error:', error.message);
+      Alert.alert('Error', 'Something went wrong while getting your location.');
     }
   };
 
@@ -80,7 +80,12 @@ const Category = () => {
       >
         <Image
           source={{ uri: item?.productFile?.url }}
-          style={{ width: 100, height: 100, borderRadius: 100, marginBottom: 6 }}
+          style={{
+            width: 100,
+            height: 100,
+            borderRadius: 100,
+            marginBottom: 6,
+          }}
           resizeMode="cover"
         />
         <Text style={[styles.text, { maxWidth: imageSize + 10 }]} numberOfLines={1}>
@@ -118,16 +123,29 @@ const Category = () => {
 };
 
 const styles = StyleSheet.create({
-  scrollContainer: { flex: 1, backgroundColor: 'white' },
-  container: { paddingTop: 16, paddingHorizontal: 12 },
+  scrollContainer: {
+    flex: 1,
+    backgroundColor: 'white',
+  },
+  container: {
+    paddingTop: 16,
+    paddingHorizontal: 12,
+  },
   card: {
     alignItems: 'center',
     marginRight: 10,
     padding: 5,
     marginTop: 10,
   },
-  text: { fontSize: 14, textAlign: 'center', fontWeight: '600' },
-  selectedCard: { borderBottomWidth: 2, borderColor: 'blue' },
+  text: {
+    fontSize: 14,
+    textAlign: 'center',
+    fontWeight: '600',
+  },
+  selectedCard: {
+    borderBottomWidth: 2,
+    borderColor: 'blue',
+  },
 });
 
 export default Category;

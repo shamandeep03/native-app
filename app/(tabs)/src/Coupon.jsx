@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from "react";
 import {
   View,
   ScrollView,
@@ -9,12 +9,11 @@ import {
   TouchableOpacity,
   Alert,
   Dimensions,
-} from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import Category from '../src/Category';
+} from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import Category from "../src/Category";
 
-
-const { width: screenWidth } = Dimensions.get('window');
+const { width: screenWidth } = Dimensions.get("window");
 
 const Coupon = () => {
   const [coupons, setCoupons] = useState([]);
@@ -25,17 +24,17 @@ const Coupon = () => {
   const getCoupons = async () => {
     setLoading(true);
     try {
-      const token = await AsyncStorage.getItem('userToken');
+      const token = await AsyncStorage.getItem("userToken");
       if (!token) {
-        Alert.alert('Error', 'No auth token found. Please log in again.');
+        Alert.alert("Error", "No auth token found. Please log in again.");
         return;
       }
 
       const response = await fetch(
-        'http://product.sash.co.in/api/ProductCategory/category-list',
+        "http://product.sash.co.in/api/ProductCategory/category-list",
         {
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
         }
@@ -45,8 +44,8 @@ const Coupon = () => {
       const json = text ? JSON.parse(text) : null;
       setCoupons(json?.data || []);
     } catch (err) {
-      console.error('Error fetching coupons:', err);
-      Alert.alert('Error', 'Could not load coupons.');
+      console.error("Error fetching coupons:", err);
+      Alert.alert("Error", "Could not load coupons.");
     } finally {
       setLoading(false);
     }
@@ -80,7 +79,7 @@ const Coupon = () => {
 
   return (
     <ScrollView style={styles.container}>
-      {/* {loading ? (
+       {loading ? (
         <ActivityIndicator size="large" color="#007bff" />
       ) : (
         <FlatList
@@ -94,9 +93,8 @@ const Coupon = () => {
           scrollEnabled={false}
           onScrollToIndexFailed={() => {}}
         />
-      )} */}
+      )} 
       <Category />
-      
     </ScrollView>
   );
 };
@@ -106,10 +104,10 @@ export default Coupon;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
   },
   card: {
-    alignItems: 'center',
+    alignItems: "center",
     paddingHorizontal: 12,
     marginTop: 20,
     width: screenWidth,
