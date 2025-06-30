@@ -1,4 +1,5 @@
 import Geolocation from 'react-native-geolocation-service';
+import * as Location from 'expo-location';
 import {
   PermissionsAndroid,
   Platform,
@@ -47,7 +48,31 @@ export const requestLocationPermission = async () => {
       return false;
     }
   } else {
-    return true; // iOS handled separately
+    // iOS permission handling using expo-location
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      
+      if (status === 'granted') {
+        return true;
+      } else {
+        Alert.alert(
+          'Permission Denied',
+          'Location permission is required to show nearby vendors. Please enable it in Settings.',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            {
+              text: 'Open Settings',
+              onPress: () => Linking.openSettings(),
+            },
+          ]
+        );
+        return false;
+      }
+    } catch (error) {
+      console.error('iOS Permission error:', error);
+      Alert.alert('Permission Error', error.message);
+      return false;
+    }
   }
 };
 

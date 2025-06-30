@@ -7,9 +7,11 @@ import {
   TextInput,
   SafeAreaView,
   StatusBar,
+  Alert,
 } from 'react-native';
 import { Slot, useRouter, usePathname } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useLocationPermission } from '../hooks/useLocationPermission';
 
 type FooterIconProps = {
   name: string;
@@ -21,6 +23,7 @@ type FooterIconProps = {
 
 export default function TabsLayout() {
   const [searchTerm, setSearchTerm] = useState('');
+  const { permissionGranted, isLoading } = useLocationPermission();
   const router = useRouter();
   const pathname = usePathname();
   const cartItemCount = 1;

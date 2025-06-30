@@ -14,6 +14,7 @@ import {
 import Vendor from '../src/Vendor';
 import { getCurrentCity } from './LocationService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { LocationPermissionIndicator } from '@/components/LocationPermissionIndicator';
 
 const Category = () => {
   const [category, setCategory] = useState([]);
@@ -97,6 +98,7 @@ const Category = () => {
 
   return (
     <ScrollView style={styles.scrollContainer}>
+      <LocationPermissionIndicator showRequestButton={true} />
       <View style={styles.container}>
         {loading ? (
           <ActivityIndicator size="large" color="#007bff" />
