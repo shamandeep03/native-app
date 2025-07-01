@@ -1,75 +1,58 @@
-// VendorScreen.js
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
-  View,
-  Text,
-  FlatList,
-  Image,
-  ActivityIndicator,
-  StyleSheet,
-  TouchableOpacity,
-  Alert,
+  View, Text, FlatList, Image, ActivityIndicator,
+  StyleSheet, TouchableOpacity, Alert,
 } from 'react-native';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { getCurrentCity } from './LocationService'; // Assume you have this file
 
 const Vendor = () => {
   const [vendors, setVendors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [cityName, setCityName] = useState(null);
   const navigation = useNavigation();
   const route = useRoute();
 
-  const { categoryId, categoryName } = route.params || {};
+  // ✅ Extracting values from route.params
+  const { categoryId, categoryName, cityName } = route.params || {};
 
-  const getVendors = async (city) => {
+  useEffect(() => {
+    if (categoryId && cityName) {
+      fetchVendors();
+    }
+  }, [categoryId, cityName]);
+
+  const fetchVendors = async () => {
     try {
       setLoading(true);
       setError(null);
       setVendors([]);
 
       const token = await AsyncStorage.getItem('userToken');
-
-      if (!token || !city || !categoryId) {
+      if (!token || !cityName || !categoryId) {
         setError('Token, city name, or category ID is missing');
         return;
       }
 
-      const url = `http://product.sash.co.in/api/Vendor/vendors/by-city-category?cityName=${city}&categoryId=${categoryId}`;
+      const url = `http://product.sash.co.in/api/Vendor/vendors/by-city-category?cityName=${cityName}&categoryId=${categoryId}`;
       const response = await axios.get(url, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
 
-      const data = Array.isArray(response.data)
-        ? response.data
-        : response.data?.data;
-
+      const data = Array.isArray(response.data) ? response.data : response.data?.data;
       if (Array.isArray(data) && data.length > 0) {
         setVendors(data);
       } else {
         setError('No vendors found for this city/category.');
       }
     } catch (err) {
+      console.error('Vendor fetch error:', err);
       setError('Failed to load vendors');
     } finally {
       setLoading(false);
     }
   };
-
-  useEffect(() => {
-    (async () => {
-      const city = await getCurrentCity();
-      setCityName(city);
-      if (city && categoryId) {
-        getVendors(city);
-      }
-    })();
-  }, [categoryId]);
 
   const renderItem = ({ item }) => (
     <TouchableOpacity
@@ -97,13 +80,7 @@ const Vendor = () => {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.heading}>
-          Vendors in <Text style={styles.city}>{cityName || '...'}</Text>
-        </Text>
-        <Text style={styles.subHeading}>Category: {categoryName}</Text>
-      </View>
-
+      <Text style={styles.subHeading}>City: {cityName} | Category: {categoryName}</Text>
       {loading ? (
         <ActivityIndicator size="large" color="#007bff" style={styles.loader} />
       ) : error ? (
@@ -125,31 +102,14 @@ const Vendor = () => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    paddingHorizontal: 16,
-    backgroundColor: '#fff',
-  },
-  header: {
-    alignItems: 'center',
-    marginTop: 20,
-    marginBottom: 12,
-  },
-  heading: {
-    fontSize: 20,
-    fontWeight: '700',
-  },
-  city: {
-    color: '#007bff',
-  },
+  container: { flex: 1, paddingHorizontal: 16, backgroundColor: '#fff' },
   subHeading: {
     fontSize: 16,
     color: '#555',
-    marginTop: 4,
+    marginTop: 10,
+    textAlign: 'center',
   },
-  loader: {
-    marginTop: 40,
-  },
+  loader: { marginTop: 40 },
   card: {
     backgroundColor: '#f9f9f9',
     padding: 12,

@@ -7,14 +7,13 @@ import {
   TextInput,
   SafeAreaView,
   StatusBar,
-  Alert,
 } from 'react-native';
 import { Slot, useRouter, usePathname } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useLocationPermission } from '../hooks/useLocationPermission';
+import { Provider as PaperProvider } from 'react-native-paper'; // ✅ Paper Provider
 
 type FooterIconProps = {
-  name: string;
+  name: keyof typeof Ionicons.glyphMap;
   label: string;
   onPress: () => void;
   badge?: number;
@@ -23,59 +22,57 @@ type FooterIconProps = {
 
 export default function TabsLayout() {
   const [searchTerm, setSearchTerm] = useState('');
-  const { permissionGranted, isLoading } = useLocationPermission();
   const router = useRouter();
-  const pathname = usePathname();
+  const pathname = usePathname() || '';
   const cartItemCount = 1;
   const showCategoriesDot = true;
 
-  // Routes where we want to HIDE footer + search + status bar
   const hideOnRoutes = ['/(auth)/LoginForm', '/SignUpForm'];
   const shouldHide = hideOnRoutes.includes(pathname);
 
   return (
-    <SafeAreaView style={styles.container}>
-      
-      <StatusBar hidden={shouldHide} />
+    <PaperProvider>
+      <SafeAreaView style={styles.container}>
+        <StatusBar hidden={shouldHide} />
 
-      {/* 🔍 Search Bar */}
-      {!shouldHide && (
-        <View style={styles.searchBarContainer}>
-          <Ionicons name="search" size={20} color="#888" style={styles.searchIcon} />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search..."
-            value={searchTerm}
-            onChangeText={setSearchTerm}
-            returnKeyType="search"
-            
-          />
+        {/* 🔍 Search Bar */}
+        {!shouldHide && (
+          <View style={styles.searchBarContainer}>
+            <Ionicons name="search" size={20} color="#888" style={styles.searchIcon} />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search..."
+              value={searchTerm}
+              onChangeText={setSearchTerm}
+              returnKeyType="search"
+            />
+          </View>
+        )}
+
+        {/* 📄 Page Content */}
+        <View style={styles.content}>
+          <Slot />
         </View>
-      )}
 
-      {/* 📄 Page Content */}
-      <View style={styles.content}>
-        <Slot />
-      </View>
-
-      {/* 🚀 Footer Navigation */}
-      {!shouldHide && (
-        <View style={styles.footer}>
-          <FooterIcon name="home-outline" label="Home" onPress={() => router.push('/(tabs)/src/Coupon')}  dot={showCategoriesDot}/>
-          <FooterIcon name="search-outline" label="Search" onPress={() => router.push('/(tabs)/src/Coupon')}dot={showCategoriesDot} />
-          <FooterIcon name="grid-outline" label="Categories" onPress={() => router.push('/(tabs)/src/Category')}  />
-          <FooterIcon name="person-outline" label="Account" onPress={() => router.push('/(tabs)/src/Vendor')} />
-          <FooterIcon name="cart-outline" label="Cart" onPress={() => router.push('/(tabs)/src/My_Cart')}  />
-        </View>
-      )}
-    </SafeAreaView>
+        {/* 🚀 Footer Navigation */}
+        {!shouldHide && (
+          <View style={styles.footer}>
+            <FooterIcon name="home-outline" label="Home" onPress={() => router.push('/(tabs)/src/Coupon')} dot={showCategoriesDot} />
+            <FooterIcon name="search-outline" label="Search" onPress={() => router.push('/(tabs)/src/Coupon')} dot={showCategoriesDot} />
+            <FooterIcon name="grid-outline" label="Categories" onPress={() => pathname !== '/(tabs)/src/Category' && router.push('/(tabs)/src/Category')} />
+            <FooterIcon name="person-outline" label="Account" onPress={() => router.push('/(tabs)/src/Vendor')} />
+            <FooterIcon name="cart-outline" label="Cart" onPress={() => router.push('/(tabs)/src/My_Cart')} badge={cartItemCount} />
+          </View>
+        )}
+      </SafeAreaView>
+    </PaperProvider>
   );
 }
 
 const FooterIcon = ({ name, label, onPress, badge = 0, dot = false }: FooterIconProps) => (
   <TouchableOpacity style={styles.iconContainer} onPress={onPress}>
     <View>
-      <Ionicons name={name as any} size={24} color="black" />
+      <Ionicons name={name} size={24} color="black" />
       {dot && <View style={styles.redDot} />}
       {badge > 0 && (
         <View style={styles.badge}>
@@ -86,7 +83,6 @@ const FooterIcon = ({ name, label, onPress, badge = 0, dot = false }: FooterIcon
     <Text style={styles.iconLabel}>{label}</Text>
   </TouchableOpacity>
 );
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
