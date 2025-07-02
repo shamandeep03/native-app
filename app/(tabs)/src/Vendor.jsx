@@ -35,7 +35,7 @@ const Vendor = () => {
         return;
       }
 
-      const url = `http://product.sash.co.in/api/Vendor/vendors/by-city-category?cityName=${cityName}&categoryId=${categoryId}`;
+      const url = `http://product.sash.co.in:81/api/Vendor/vendors/by-city-category?cityName=${cityName}&categoryId=${categoryId}`;
       const response = await axios.get(url, {
         headers: { Authorization: `Bearer ${token}` },
       });

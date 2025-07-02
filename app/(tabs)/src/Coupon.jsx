@@ -31,7 +31,7 @@ const Coupon = () => {
       }
 
       const response = await fetch(
-        "http://product.sash.co.in/api/ProductCategory/category-list",
+        "http://product.sash.co.in:81/api/ProductCategory/category-list",
         {
           headers: {
             "Content-Type": "application/json",

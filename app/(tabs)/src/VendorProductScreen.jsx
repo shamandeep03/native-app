@@ -28,7 +28,7 @@ const VendorProductScreen = ({ route }) => {
         return;
       }
 
-      const url = `http://product.sash.co.in/api/VendorProduct/products/by-vendor-category?vendorId=${vendorId}&categoryId=${categoryId}`;
+      const url = `http://product.sash.co.in:81/api/VendorProduct/products/by-vendor-category?vendorId=${vendorId}&categoryId=${categoryId}`;
 
       const response = await axios.get(url, {
         headers: {
