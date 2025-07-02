@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -9,16 +9,29 @@ import {
   Image,
   ScrollView,
   Dimensions,
+  ActivityIndicator,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { usePathname } from 'expo-router'; // Import usePathname to get the current path
 
 const { height, width } = Dimensions.get('window');
 
 const LoginForm = ({ navigation }) => {
   const [userName, setUserName] = useState('');
   const [password, setPassword] = useState('');
-  const pathname = usePathname(); // Get the current route path
+  const [loading, setLoading] = useState(true);
+
+  // 👇 Check for existing token when component mounts
+  useEffect(() => {
+    const checkToken = async () => {
+      const token = await AsyncStorage.getItem('userToken');
+      if (token) {
+        navigation.replace('Coupon'); // 👈 Avoid going back to login screen
+      } else {
+        setLoading(false);
+      }
+    };
+    checkToken();
+  }, []);
 
   const handleLogin = async () => {
     if (!userName || !password) {
@@ -37,23 +50,49 @@ const LoginForm = ({ navigation }) => {
 
       const token = await response.text();
 
-      if (response.ok && token && token.startsWith('ey')) {
+      if (response.ok && token?.startsWith('ey')) {
         await AsyncStorage.setItem('userToken', token);
-        navigation.navigate('Coupon'); // ✅ Ensure 'Coupon' screen exists in navigator
+
+        const userInfoRes = await fetch('http://product.sash.co.in:81/api/Address/user-info', {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        const userInfo = await userInfoRes.json();
+        const userId = userInfo?.id || userInfo?.data?.id || userInfo?.userId;
+
+        if (userId) {
+          await AsyncStorage.setItem('userId', userId.toString());
+          navigation.replace('Coupon'); // 👈 Navigate to main screen and prevent going back
+        } else {
+          Alert.alert('Login Failed', 'User ID not found in response');
+        }
       } else {
-        Alert.alert('Login Failed', 'Invalid token or credentials');
+        Alert.alert('Login Failed', 'Invalid credentials');
       }
     } catch (error) {
-      Alert.alert('Error', error.message);
+      Alert.alert('Error', error.message || 'Something went wrong');
     }
   };
+
+  if (loading) {
+    return (
+      <View style={styles.wrapper}>
+        <ActivityIndicator size="large" color="#0066cc" />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.wrapper}>
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
         <View style={styles.logoContainer}>
           <Image
-            source={{ uri: 'https://res.cloudinary.com/duxekwjna/image/upload/v1744828895/djzkpedj63pxvcb7x8ng.jpg' }}
+            source={{
+              uri: 'https://res.cloudinary.com/duxekwjna/image/upload/v1744828895/djzkpedj63pxvcb7x8ng.jpg',
+            }}
             style={styles.logo}
           />
         </View>
@@ -77,10 +116,14 @@ const LoginForm = ({ navigation }) => {
           <TouchableOpacity style={styles.button} onPress={handleLogin}>
             <Text style={styles.buttonText}>Log In</Text>
           </TouchableOpacity>
+
           <Text style={styles.SingUp}>
             Don't have an account?{' '}
-            <Text style={styles.nextpage} onPress={() => navigation.navigate('SignUpForm')}>
-              SingUp
+            <Text
+              style={styles.nextpage}
+              onPress={() => navigation.navigate('SignUpForm')}
+            >
+              Sign Up
             </Text>
           </Text>
         </View>
@@ -91,15 +134,11 @@ const LoginForm = ({ navigation }) => {
 
 export default LoginForm;
 
+
 const styles = StyleSheet.create({
   wrapper: {
     flex: 1,
     backgroundColor: '#fff',
-  },
-  background: {
-    position: 'absolute',
-    width: width,
-    height: height,
   },
   container: {
     flexGrow: 1,
@@ -168,4 +207,3 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 });
-

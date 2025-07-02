@@ -9,14 +9,11 @@ import {
   SafeAreaView,
   Alert,
 } from 'react-native';
-import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 
 const My_Cart = () => {
-  const route = useRoute();
-  const navigation = useNavigation();
-  const item = route.params?.item;
-
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -28,13 +25,24 @@ const My_Cart = () => {
 
   const fetchCart = async () => {
     try {
-      const response = await axios.get('http://product.sash.co.in/api/Cart');
+      const token = await AsyncStorage.getItem('userToken');
+      if (!token) {
+        console.warn('Token not found');
+        return;
+      }
+
+      const response = await axios.get('http://product.sash.co.in:81/api/Cart/my-cart', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
       const data = response.data;
 
       if (Array.isArray(data)) {
         const itemsWithQty = data.map(item => ({
           ...item,
-          qty: item.count || 1, // use count if available
+          qty: item.count || 1,
         }));
         setCartItems(itemsWithQty);
       } else {
@@ -71,15 +79,26 @@ const My_Cart = () => {
         {
           text: 'Remove',
           onPress: async () => {
+            const itemToRemove = cartItems[index];
             const updatedItems = cartItems.filter((_, i) => i !== index);
-            setCartItems(updatedItems); // Update the cartItems state
+            setCartItems(updatedItems);
 
-            // Remove from backend API
             try {
-              await axios.delete(`http://product.sash.co.in/api/Cart/${cartItems[index].id}`);
-              console.log('Item removed from cart on the backend');
+              const token = await AsyncStorage.getItem('userToken');
+              if (!token) {
+                console.warn('Token not found');
+                return;
+              }
+
+              await axios.delete(`http://product.sash.co.in:81/api/Cart/${itemToRemove.id}`, {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                },
+              });
+
+              console.log('Item removed from backend');
             } catch (error) {
-              console.error('Failed to remove item from backend:', error);
+              console.error('Error removing from backend:', error);
             }
           },
           style: 'destructive',
@@ -89,10 +108,12 @@ const My_Cart = () => {
   };
 
   const calculateTotal = () => {
-    return cartItems.reduce((sum, item) => {
-      const price = parseInt(item.id || '0');
-      return sum + price * item.qty;
-    }, 0);
+    return cartItems
+      .reduce((sum, item) => {
+        const price = parseFloat(item.product?.price || '0');
+        return sum + price * item.qty;
+      }, 0)
+      .toFixed(2);
   };
 
   return (
@@ -105,9 +126,7 @@ const My_Cart = () => {
           {/* Delivery Address */}
           <View style={styles.topBar}>
             <Text style={styles.delivery}>Deliver to: Preet Nager, 148028</Text>
-            <Text style={styles.address}>
-              House no-78, Near boys school sunam, Sunam
-            </Text>
+            <Text style={styles.address}>House no-78, Near boys school sunam, Sunam</Text>
             <TouchableOpacity onPress={() => Alert.alert('Change address')}>
               <Text style={styles.change}>Change</Text>
             </TouchableOpacity>
@@ -127,26 +146,24 @@ const My_Cart = () => {
           {loading ? (
             <Text style={{ textAlign: 'center', marginTop: 20 }}>Loading cart...</Text>
           ) : cartItems.length === 0 ? (
-            <Text style={{ textAlign: 'center', marginTop: 20 }}>
-              Your cart is empty.
-            </Text>
+            <Text style={{ textAlign: 'center', marginTop: 20 }}>Your cart is empty.</Text>
           ) : (
             cartItems.map((item, index) => (
               <View style={styles.product} key={index}>
                 <Image
                   source={{
-                    uri: item?.Image || 'https://res.cloudinary.com/duxekwjna/image/upload/v1744278555/r20zfkdqdcshzdjwabtm.jpg',
+                    uri: item.product?.image?.url || 'https://via.placeholder.com/80',
                   }}
                   style={styles.image}
                 />
                 <View style={styles.details}>
-                  <Text style={styles.productTitle}>{item.Name || 'Food Product'}</Text>
-                  
+                  <Text style={styles.productTitle}>
+                    {item.product?.name || 'Unnamed Product'}
+                  </Text>
 
                   <View style={styles.id}>
-                    <Text style={styles.discount}>{item.Offer || ''}</Text>
-                    <Text style={styles.oldPrice}>₹{parseInt(item.id || 0)}</Text>
-                    <Text style={styles.newPrice}>₹{item.id || '0'}</Text>
+                    <Text style={styles.oldPrice}>₹{item.product?.price}</Text>
+                    <Text style={styles.newPrice}>₹{item.product?.price}</Text>
                   </View>
 
                   <View style={styles.qty}>
@@ -161,8 +178,6 @@ const My_Cart = () => {
                       </TouchableOpacity>
                     </View>
                   </View>
-
-           
 
                   <View style={styles.actions}>
                     <TouchableOpacity>
@@ -193,19 +208,24 @@ const My_Cart = () => {
 };
 
 export default My_Cart;
-
 const styles = StyleSheet.create({
-  container: { backgroundColor: '#f5f5f5' },
+  container: {
+    backgroundColor: '#f5f5f5',
+  },
   product: {
     backgroundColor: 'white',
     flexDirection: 'row',
     padding: 12,
     marginBottom: 10,
+    borderRadius: 8,
+    elevation: 2,
+    marginHorizontal: 10,
   },
   image: {
     width: 80,
     height: 80,
     borderRadius: 6,
+    backgroundColor: '#eee',
   },
   details: {
     flex: 1,
@@ -214,30 +234,24 @@ const styles = StyleSheet.create({
   productTitle: {
     fontSize: 16,
     fontWeight: '600',
+    marginBottom: 4,
   },
-  desc: {
-    color: '#777',
-    marginTop: 2,
-  },
-  pricing: {
+  id: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 8,
-    gap: 6,
-  },
-  discount: {
-    color: 'green',
-    fontWeight: 'bold',
-    fontSize: 14,
-  },
-  newPrice: {
-    fontWeight: 'bold',
-    marginLeft: 6,
+    marginTop: 4,
+    gap: 10,
   },
   oldPrice: {
     textDecorationLine: 'line-through',
     color: '#999',
     fontSize: 14,
+  },
+  newPrice: {
+    fontWeight: 'bold',
+    fontSize: 15,
+    color: '#000',
+    marginLeft: 8,
   },
   qty: {
     flexDirection: 'row',
@@ -247,13 +261,14 @@ const styles = StyleSheet.create({
   qtyButtons: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
     marginLeft: 8,
+    gap: 10,
   },
   qtyButton: {
     fontSize: 20,
     fontWeight: 'bold',
     color: '#3f51b5',
+    paddingHorizontal: 10,
   },
   qtyCount: {
     fontSize: 16,
@@ -269,46 +284,11 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 13,
   },
-  totalBar: {
-    backgroundColor: 'white',
-    padding: 16,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    borderTopWidth: 1,
-    borderColor: '#ddd',
-  },
-  bottomBar: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: 'white',
-    padding: 16,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    borderTopWidth: 1,
-    borderColor: '#ccc',
-  },
-  totalText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  continueBtn: {
-    backgroundColor: '#6A5ACD',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 8,
-  },
-  continueText: {
-    color: 'white',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
   topBar: {
     backgroundColor: 'white',
     padding: 16,
     marginBottom: 10,
+    elevation: 2,
   },
   delivery: {
     fontWeight: 'bold',
@@ -330,6 +310,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    elevation: 2,
   },
   couponText: {
     flex: 1,
@@ -347,10 +328,34 @@ const styles = StyleSheet.create({
     color: 'white',
     fontWeight: 'bold',
   },
-  countText: {
-    marginTop: 6,
-    color: '#333',
-    fontSize: 14,
-    fontWeight: '500',
+  bottomBar: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'white',
+    padding: 16,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderTopWidth: 1,
+    borderColor: '#ccc',
+    elevation: 10,
+  },
+  totalText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#000',
+  },
+  continueBtn: {
+    backgroundColor: '#6A5ACD',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  continueText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 16,
   },
 });

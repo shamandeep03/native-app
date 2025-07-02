@@ -60,7 +60,7 @@ export default function TabsLayout() {
             <FooterIcon name="home-outline" label="Home" onPress={() => router.push('/(tabs)/src/Coupon')} dot={showCategoriesDot} />
             <FooterIcon name="search-outline" label="Search" onPress={() => router.push('/(tabs)/src/Coupon')} dot={showCategoriesDot} />
             <FooterIcon name="grid-outline" label="Categories" onPress={() => pathname !== '/(tabs)/src/Category' && router.push('/(tabs)/src/Category')} />
-            <FooterIcon name="person-outline" label="Account" onPress={() => router.push('/(tabs)/src/Vendor')} />
+            <FooterIcon name="person-outline" label="Account" onPress={() => router.push("./src/Logout")} />
             <FooterIcon name="cart-outline" label="Cart" onPress={() => router.push('/(tabs)/src/My_Cart')} badge={cartItemCount} />
           </View>
         )}
