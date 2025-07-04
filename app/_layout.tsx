@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { Slot, useRouter, usePathname } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { Provider as PaperProvider } from 'react-native-paper'; // ✅ Paper Provider
+import { Provider as PaperProvider } from 'react-native-paper';
 
 type FooterIconProps = {
   name: keyof typeof Ionicons.glyphMap;
@@ -57,10 +57,10 @@ export default function TabsLayout() {
         {/* 🚀 Footer Navigation */}
         {!shouldHide && (
           <View style={styles.footer}>
-            <FooterIcon name="home-outline" label="Home" onPress={() => router.push('/(tabs)/src/Coupon')} dot={showCategoriesDot} />
-            <FooterIcon name="search-outline" label="Search" onPress={() => router.push('/(tabs)/src/Coupon')} dot={showCategoriesDot} />
-            <FooterIcon name="grid-outline" label="Categories" onPress={() => pathname !== '/(tabs)/src/Category' && router.push('/(tabs)/src/Category')} />
-            <FooterIcon name="person-outline" label="Account" onPress={() => router.push("./src/Logout")} />
+            <FooterIcon name="home-outline" label="Home" onPress={() => router.push('/(tabs)/src/Coupon')} />
+            <FooterIcon name="cube-outline" label="Orders" onPress={() => router.push('./src/AllOrders')} />
+            <FooterIcon name="grid-outline" label="Categories" onPress={() => pathname !== '/(tabs)/src/Category' && router.push('/(tabs)/src/Category')} dot={showCategoriesDot} />
+            <FooterIcon name="person-outline" label="Logout" onPress={() => router.push('/(tabs)/src/Logout')} />
             <FooterIcon name="cart-outline" label="Cart" onPress={() => router.push('/(tabs)/src/My_Cart')} badge={cartItemCount} />
           </View>
         )}
@@ -83,6 +83,7 @@ const FooterIcon = ({ name, label, onPress, badge = 0, dot = false }: FooterIcon
     <Text style={styles.iconLabel}>{label}</Text>
   </TouchableOpacity>
 );
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,

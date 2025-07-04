@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+// ✅ My_Cart.js
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -8,14 +9,16 @@ import {
   TouchableOpacity,
   SafeAreaView,
   Alert,
-} from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import axios from 'axios';
+} from "react-native";
+import { useFocusEffect } from "@react-navigation/native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import axios from "axios";
+import { useRouter } from "expo-router";
 
 const My_Cart = () => {
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   useFocusEffect(
     React.useCallback(() => {
@@ -25,22 +28,25 @@ const My_Cart = () => {
 
   const fetchCart = async () => {
     try {
-      const token = await AsyncStorage.getItem('userToken');
+      const token = await AsyncStorage.getItem("userToken");
       if (!token) {
-        console.warn('Token not found');
+        console.warn("Token not found");
         return;
       }
 
-      const response = await axios.get('http://product.sash.co.in:81/api/Cart/my-cart', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await axios.get(
+        "http://product.sash.co.in:81/api/Cart/my-cart",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       const data = response.data;
 
       if (Array.isArray(data)) {
-        const itemsWithQty = data.map(item => ({
+        const itemsWithQty = data.map((item) => ({
           ...item,
           qty: item.count || 1,
         }));
@@ -49,20 +55,20 @@ const My_Cart = () => {
         setCartItems([]);
       }
     } catch (error) {
-      console.error('Failed to fetch cart data:', error);
+      console.error("Failed to fetch cart data:", error);
       setCartItems([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const incrementQty = index => {
+  const incrementQty = (index) => {
     const updatedItems = [...cartItems];
     updatedItems[index].qty += 1;
     setCartItems(updatedItems);
   };
 
-  const decrementQty = index => {
+  const decrementQty = (index) => {
     const updatedItems = [...cartItems];
     if (updatedItems[index].qty > 1) {
       updatedItems[index].qty -= 1;
@@ -70,50 +76,53 @@ const My_Cart = () => {
     }
   };
 
-  const removeFromCart = index => {
-    Alert.alert(
-      'Remove Item',
-      'Are you sure you want to remove this item?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Remove',
-          onPress: async () => {
-            const itemToRemove = cartItems[index];
-            const updatedItems = cartItems.filter((_, i) => i !== index);
-            setCartItems(updatedItems);
+  const removeFromCart = (index) => {
+    Alert.alert("Remove Item", "Are you sure you want to remove this item?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Remove",
+        onPress: async () => {
+          const itemToRemove = cartItems[index];
+          const updatedItems = cartItems.filter((_, i) => i !== index);
+          setCartItems(updatedItems);
 
-            try {
-              const token = await AsyncStorage.getItem('userToken');
-              if (!token) {
-                console.warn('Token not found');
-                return;
-              }
+          try {
+            const token = await AsyncStorage.getItem("userToken");
+            if (!token) {
+              console.warn("Token not found");
+              return;
+            }
 
-              await axios.delete(`http://product.sash.co.in:81/api/Cart/${itemToRemove.id}`, {
+            await axios.delete(
+              `http://product.sash.co.in:81/api/Cart/${itemToRemove.id}`,
+              {
                 headers: {
                   Authorization: `Bearer ${token}`,
                 },
-              });
-
-              console.log('Item removed from backend');
-            } catch (error) {
-              console.error('Error removing from backend:', error);
-            }
-          },
-          style: 'destructive',
+              }
+            );
+          } catch (error) {
+            console.error("Error removing from backend:", error);
+          }
         },
-      ]
-    );
+        style: "destructive",
+      },
+    ]);
   };
 
   const calculateTotal = () => {
     return cartItems
       .reduce((sum, item) => {
-        const price = parseFloat(item.product?.price || '0');
+        const price = parseFloat(item.product?.price || "0");
         return sum + price * item.qty;
       }, 0)
       .toFixed(2);
+  };
+
+  const handleContinue = async () => {
+    await AsyncStorage.setItem("cartItems", JSON.stringify(cartItems));
+    await AsyncStorage.setItem("totalAmount", calculateTotal());
+    router.push("../src/Order");
   };
 
   return (
@@ -123,16 +132,16 @@ const My_Cart = () => {
           style={styles.container}
           contentContainerStyle={{ paddingBottom: 100 }}
         >
-          {/* Delivery Address */}
           <View style={styles.topBar}>
             <Text style={styles.delivery}>Deliver to: Preet Nager, 148028</Text>
-            <Text style={styles.address}>House no-78, Near boys school sunam, Sunam</Text>
-            <TouchableOpacity onPress={() => Alert.alert('Change address')}>
+            <Text style={styles.address}>
+              House no-78, Near boys school sunam, Sunam
+            </Text>
+            <TouchableOpacity onPress={() => Alert.alert("Change address")}>
               <Text style={styles.change}>Change</Text>
             </TouchableOpacity>
           </View>
 
-          {/* Coupon */}
           <View style={styles.couponSection}>
             <Text style={styles.couponText}>
               Flat ₹52 Off - Apply cashback coupon for instant savings
@@ -142,23 +151,28 @@ const My_Cart = () => {
             </TouchableOpacity>
           </View>
 
-          {/* Cart Items */}
           {loading ? (
-            <Text style={{ textAlign: 'center', marginTop: 20 }}>Loading cart...</Text>
+            <Text style={{ textAlign: "center", marginTop: 20 }}>
+              Loading cart...
+            </Text>
           ) : cartItems.length === 0 ? (
-            <Text style={{ textAlign: 'center', marginTop: 20 }}>Your cart is empty.</Text>
+            <Text style={{ textAlign: "center", marginTop: 20 }}>
+              Your cart is empty.
+            </Text>
           ) : (
             cartItems.map((item, index) => (
               <View style={styles.product} key={index}>
                 <Image
                   source={{
-                    uri: item.product?.image?.url || 'https://via.placeholder.com/80',
+                    uri:
+                      item.product?.image?.url ||
+                      "https://via.placeholder.com/80",
                   }}
                   style={styles.image}
                 />
                 <View style={styles.details}>
                   <Text style={styles.productTitle}>
-                    {item.product?.name || 'Unnamed Product'}
+                    {item.product?.name || "Unnamed Product"}
                   </Text>
 
                   <View style={styles.id}>
@@ -193,11 +207,13 @@ const My_Cart = () => {
           )}
         </ScrollView>
 
-        {/* Bottom Bar */}
         {cartItems.length > 0 && (
           <View style={styles.bottomBar}>
             <Text style={styles.totalText}>Total: ₹{calculateTotal()}</Text>
-            <TouchableOpacity style={styles.continueBtn}>
+            <TouchableOpacity
+              style={styles.continueBtn}
+              onPress={handleContinue}
+            >
               <Text style={styles.continueText}>Continue</Text>
             </TouchableOpacity>
           </View>
@@ -208,13 +224,12 @@ const My_Cart = () => {
 };
 
 export default My_Cart;
+
 const styles = StyleSheet.create({
-  container: {
-    backgroundColor: '#f5f5f5',
-  },
+  container: { backgroundColor: "#f5f5f5" },
   product: {
-    backgroundColor: 'white',
-    flexDirection: 'row',
+    backgroundColor: "white",
+    flexDirection: "row",
     padding: 12,
     marginBottom: 10,
     borderRadius: 8,
@@ -225,137 +240,88 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 6,
-    backgroundColor: '#eee',
+    backgroundColor: "#eee",
   },
-  details: {
-    flex: 1,
-    marginLeft: 12,
-  },
-  productTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 4,
-  },
-  id: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 4,
-    gap: 10,
-  },
+  details: { flex: 1, marginLeft: 12 },
+  productTitle: { fontSize: 16, fontWeight: "600", marginBottom: 4 },
+  id: { flexDirection: "row", alignItems: "center", marginTop: 4, gap: 10 },
   oldPrice: {
-    textDecorationLine: 'line-through',
-    color: '#999',
+    textDecorationLine: "line-through",
+    color: "#999",
     fontSize: 14,
   },
   newPrice: {
-    fontWeight: 'bold',
+    fontWeight: "bold",
     fontSize: 15,
-    color: '#000',
+    color: "#000",
     marginLeft: 8,
   },
-  qty: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 8,
-  },
+  qty: { flexDirection: "row", alignItems: "center", marginTop: 8 },
   qtyButtons: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginLeft: 8,
     gap: 10,
   },
   qtyButton: {
     fontSize: 20,
-    fontWeight: 'bold',
-    color: '#3f51b5',
+    fontWeight: "bold",
+    color: "#3f51b5",
     paddingHorizontal: 10,
   },
-  qtyCount: {
-    fontSize: 16,
-    fontWeight: '500',
-  },
+  qtyCount: { fontSize: 16, fontWeight: "500" },
   actions: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginTop: 10,
   },
   actionText: {
-    color: '#3f51b5',
-    fontWeight: 'bold',
+    color: "#3f51b5",
+    fontWeight: "bold",
     fontSize: 13,
   },
-  topBar: {
-    backgroundColor: 'white',
-    padding: 16,
-    marginBottom: 10,
-    elevation: 2,
-  },
-  delivery: {
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  address: {
-    marginTop: 4,
-    color: '#666',
-  },
-  change: {
-    marginTop: 6,
-    color: '#3f51b5',
-    fontWeight: 'bold',
-  },
+  topBar: { backgroundColor: "white", padding: 16, marginBottom: 10, elevation: 2 },
+  delivery: { fontWeight: "bold", fontSize: 16 },
+  address: { marginTop: 4, color: "#666" },
+  change: { marginTop: 6, color: "#3f51b5", fontWeight: "bold" },
   couponSection: {
-    backgroundColor: 'white',
+    backgroundColor: "white",
     padding: 16,
     marginBottom: 10,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     elevation: 2,
   },
-  couponText: {
-    flex: 1,
-    fontSize: 14,
-    color: '#333',
-  },
+  couponText: { flex: 1, fontSize: 14, color: "#333" },
   applyButton: {
-    backgroundColor: '#ff9800',
+    backgroundColor: "#ff9800",
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 6,
     marginLeft: 10,
   },
-  applyText: {
-    color: 'white',
-    fontWeight: 'bold',
-  },
+  applyText: { color: "white", fontWeight: "bold" },
   bottomBar: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: 'white',
+    backgroundColor: "white",
     padding: 16,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     borderTopWidth: 1,
-    borderColor: '#ccc',
+    borderColor: "#ccc",
     elevation: 10,
   },
-  totalText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#000',
-  },
+  totalText: { fontSize: 18, fontWeight: "bold", color: "#000" },
   continueBtn: {
-    backgroundColor: '#6A5ACD',
+    backgroundColor: "#6A5ACD",
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 8,
   },
-  continueText: {
-    color: 'white',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
+  continueText: { color: "white", fontWeight: "bold", fontSize: 16 },
 });
