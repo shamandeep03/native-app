@@ -33,6 +33,7 @@ const VendorProductScreen = ({ route, navigation }) => {
       const selectedCategoryId = categoryId || Number(storedCategoryId);
 
       if (!vendorId || !selectedCategoryId) {
+        console.warn('⚠️ Missing vendorId or categoryId');
         Alert.alert('⚠️ Missing Info', 'Vendor ID ya Category ID missing aa.');
         setLoading(false);
         return;
@@ -41,8 +42,8 @@ const VendorProductScreen = ({ route, navigation }) => {
       const token = await AsyncStorage.getItem('userToken');
       const cityName = await AsyncStorage.getItem('cityName') || 'Ludhiana';
 
-      console.log('🔑 token:', token);
-      console.log('🏙️ cityName:', cityName);
+      console.log('🔑 Token:', token);
+      console.log('🏙️ City Name:', cityName);
 
       if (!token) {
         Alert.alert('🔒 Unauthorized', 'Login token missing aa.');
@@ -60,13 +61,10 @@ const VendorProductScreen = ({ route, navigation }) => {
         },
       });
 
-      console.log('📋 API Response:', JSON.stringify(res.data, null, 2));
+      console.log('📋 API Full Response:', res.data);
 
-      const apiData = Array.isArray(res.data) ? res.data : [];
-
-      if (apiData.length === 0) {
-        console.log('🚫 No products returned from API.');
-      }
+      const apiData = Array.isArray(res.data) ? res.data : res.data?.data || [];
+      console.log('📦 Parsed Products:', apiData);
 
       setProducts(apiData);
     } catch (error) {
@@ -80,20 +78,34 @@ const VendorProductScreen = ({ route, navigation }) => {
   const handleAddToCart = async (item) => {
     try {
       setPosting(true);
+
       const token = await AsyncStorage.getItem('userToken');
       const userId = await AsyncStorage.getItem('userId');
       const addressId = await AsyncStorage.getItem('userAddressId');
       const cityName = await AsyncStorage.getItem('cityName') || 'Ludhiana';
 
+      console.log('🔐 Token:', token);
+      console.log('👤 userId:', userId);
+      console.log('🏠 addressId:', addressId);
+      console.log('📦 item:', item);
+
       if (!token || !userId || !addressId) {
-        Alert.alert('Missing Info', 'Login ya address details nahi mile.');
+        Alert.alert('⚠️ Missing Info', 'Login ya address details nahi mile.');
+        setPosting(false);
+        return;
+      }
+
+      if (!item?.id) {
+        Alert.alert('🛑 Missing Product ID', 'item.id null aa. Product invalid ho sakda.');
+        console.warn('🛑 item.id missing:', item);
+        setPosting(false);
         return;
       }
 
       const now = new Date().toISOString();
       const payload = {
         id: 0,
-        vendorProductId: item.vendorProductId || item.id,
+        vendorProductId: Number(item.id),
         createdBy: Number(userId),
         addressId: Number(addressId),
         count: 1,
@@ -102,6 +114,8 @@ const VendorProductScreen = ({ route, navigation }) => {
         modifiedDateTime: now,
       };
 
+      console.log('📤 Payload to POST:', payload);
+
       const res = await axios.post('http://product.sash.co.in:81/api/Cart', payload, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -109,6 +123,8 @@ const VendorProductScreen = ({ route, navigation }) => {
           CityName: cityName,
         },
       });
+
+      console.log('✅ POST Response:', res.status, res.data);
 
       if (res.status === 200 || res.status === 201) {
         Alert.alert('✅ Success', 'Product cart ch add ho gya.', [
@@ -168,18 +184,14 @@ const VendorProductScreen = ({ route, navigation }) => {
       ) : products.length > 0 ? (
         <FlatList
           data={products}
-          keyExtractor={(item, index) => `${item.vendorProductId || item.id}-${index}`}
+          keyExtractor={(item, index) => `${item.id}-${index}`}
           renderItem={renderItem}
           numColumns={2}
           columnWrapperStyle={styles.row}
           contentContainerStyle={styles.listContent}
         />
       ) : (
-        <Text style={styles.noData}>
-          📭 No Products Found{'\n'}
-          Vendor ID: {vendorId}{'\n'}
-          Category ID: {categoryId}
-        </Text>
+        <Text style={styles.noData}>📭 No Products Found{'\n'}Vendor ID: {vendorId}{'\n'}Category ID: {categoryId}</Text>
       )}
     </View>
   );
@@ -188,32 +200,11 @@ const VendorProductScreen = ({ route, navigation }) => {
 export default VendorProductScreen;
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f8f9fa',
-    paddingHorizontal: 10,
-    paddingTop: 16,
-  },
-  heading: {
-    fontSize: 22,
-    fontWeight: '700',
-    textAlign: 'center',
-    marginBottom: 10,
-    color: '#212529',
-  },
-  loader: {
-    marginTop: 40,
-  },
-  noData: {
-    fontSize: 16,
-    textAlign: 'center',
-    color: '#dc3545',
-    marginTop: 40,
-  },
-  row: {
-    justifyContent: 'space-between',
-    marginBottom: 16,
-  },
+  container: { flex: 1, backgroundColor: '#f8f9fa', paddingHorizontal: 10, paddingTop: 16 },
+  heading: { fontSize: 22, fontWeight: '700', textAlign: 'center', marginBottom: 10, color: '#212529' },
+  loader: { marginTop: 40 },
+  noData: { fontSize: 16, textAlign: 'center', color: '#dc3545', marginTop: 40 },
+  row: { justifyContent: 'space-between', marginBottom: 16 },
   card: {
     backgroundColor: '#ffffff',
     borderRadius: 8,
