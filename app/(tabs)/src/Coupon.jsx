@@ -70,7 +70,7 @@ const Coupon = () => {
   const renderItem = ({ item }) => (
     <TouchableOpacity style={styles.card}>
       <Image
-        source={{ uri: item?.productFile?.url }}
+        source={{ uri: item?.productFile?.imageUrl || "https://via.placeholder.com/300" }}
         style={styles.image}
         resizeMode="cover"
       />

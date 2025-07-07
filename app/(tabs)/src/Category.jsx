@@ -88,7 +88,7 @@ const Category = () => {
     <TouchableOpacity onPress={() => handleCategoryPress(item)} activeOpacity={0.7}>
       <View style={[styles.card, { width: imageSize + 10 }]}>
         <Image
-          source={{ uri: item?.productFile?.url || 'https://via.placeholder.com/100' }}
+          source={{ uri: item?.productFile?.imageUrl || 'https://via.placeholder.com/100' }}
           style={styles.image}
           resizeMode="cover"
         />

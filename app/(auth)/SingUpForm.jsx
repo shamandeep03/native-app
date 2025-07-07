@@ -7,7 +7,7 @@ import {
   Alert,
   StyleSheet,
   ScrollView,
-  Image
+  Image,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
@@ -45,25 +45,35 @@ const SignupForm = () => {
     if (!validateForm()) return;
 
     const payload = {
-      ...form,
+      id: 0,
+      firstName: form.firstName,
+      lastName: form.lastName,
       age: parseInt(form.age),
+      email: form.email,
+      phoneNumber: form.phoneNumber,
+      gender: form.gender,
+      passwordHash: form.password, // Correct password field
       roleId: 1,
       statusId: 1,
+      isDeleted: false,
+      promoBalance: 300, // Default ₹300
       profileImageId: 447,
-      id: 0,
     };
 
     try {
       const response = await fetch('http://product.sash.co.in/api/Account/sign-up', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
 
       if (response.ok) {
-        Alert.alert('Success', 'Account created successfully!');
+        Alert.alert(
+          'Success',
+          'Account created successfully! ₹300 promo balance added.'
+        );
+
+        // ✅ Redirect to Coupon screen after signup
         navigation.reset({
           index: 0,
           routes: [{ name: 'LoginForm' }],
@@ -83,7 +93,9 @@ const SignupForm = () => {
     <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.logoContainer}>
         <Image
-          source={{ uri: 'https://res.cloudinary.com/duxekwjna/image/upload/v1744828895/djzkpedj63pxvcb7x8ng.jpg' }}
+          source={{
+            uri: 'https://res.cloudinary.com/duxekwjna/image/upload/v1744828895/djzkpedj63pxvcb7x8ng.jpg',
+          }}
           style={styles.logo}
         />
       </View>
@@ -92,7 +104,7 @@ const SignupForm = () => {
         <TextInput placeholder="First Name" style={styles.input} onChangeText={val => handleChange('firstName', val)} />
         <TextInput placeholder="Last Name" style={styles.input} onChangeText={val => handleChange('lastName', val)} />
         <TextInput placeholder="Age" keyboardType="numeric" style={styles.input} onChangeText={val => handleChange('age', val)} />
-        <TextInput placeholder="Email" style={styles.input} keyboardType="email-address" onChangeText={val => handleChange('email', val)} />
+        <TextInput placeholder="Email" keyboardType="email-address" style={styles.input} onChangeText={val => handleChange('email', val)} />
         <TextInput placeholder="Phone Number" keyboardType="phone-pad" style={styles.input} onChangeText={val => handleChange('phoneNumber', val)} />
         <TextInput placeholder="Gender" style={styles.input} onChangeText={val => handleChange('gender', val)} />
         <TextInput placeholder="Password" secureTextEntry style={styles.input} onChangeText={val => handleChange('password', val)} />

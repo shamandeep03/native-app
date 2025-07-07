@@ -8,49 +8,70 @@ import {
   StyleSheet,
   TouchableOpacity,
   Alert,
+  Dimensions,
 } from 'react-native';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+const { width } = Dimensions.get('window');
+
 const VendorProductScreen = ({ route, navigation }) => {
-  const { vendorId, categoryId, vendorName } = route.params;
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [posting, setPosting] = useState(false);
+
+  const { vendorId, categoryId, vendorName = 'Vendor' } = route.params || {};
 
   useEffect(() => {
-    fetchVendorProducts();
+    console.log('📦 Params:', { vendorId, categoryId });
+    loadVendorProducts();
   }, []);
 
-  const fetchVendorProducts = async () => {
+  const loadVendorProducts = async () => {
     try {
-      setLoading(true);
-      const token = await AsyncStorage.getItem('userToken');
-      if (!token || !vendorId || !categoryId) {
-        setError('Missing required token or parameters.');
+      const storedCategoryId = await AsyncStorage.getItem('selectedCategoryId');
+      const selectedCategoryId = categoryId || Number(storedCategoryId);
+
+      if (!vendorId || !selectedCategoryId) {
+        Alert.alert('⚠️ Missing Info', 'Vendor ID ya Category ID missing aa.');
+        setLoading(false);
         return;
       }
 
-      const url = `http://product.sash.co.in:81/api/VendorProduct/products/by-vendor-category?vendorId=${vendorId}&categoryId=${categoryId}`;
-      const response = await axios.get(url, {
+      const token = await AsyncStorage.getItem('userToken');
+      const cityName = await AsyncStorage.getItem('cityName') || 'Ludhiana';
+
+      console.log('🔑 token:', token);
+      console.log('🏙️ cityName:', cityName);
+
+      if (!token) {
+        Alert.alert('🔒 Unauthorized', 'Login token missing aa.');
+        setLoading(false);
+        return;
+      }
+
+      const url = `http://product.sash.co.in/api/VendorProduct/products/by-vendor-category?vendorId=${vendorId}&categoryId=${selectedCategoryId}`;
+      console.log('🌐 API URL:', url);
+
+      const res = await axios.get(url, {
         headers: {
           Authorization: `Bearer ${token}`,
+          CityName: cityName,
         },
       });
 
-      const data = Array.isArray(response.data)
-        ? response.data
-        : response.data?.data;
+      console.log('📋 API Response:', JSON.stringify(res.data, null, 2));
 
-      if (Array.isArray(data) && data.length > 0) {
-        setProducts(data);
-        setError(null);
-      } else {
-        setError('No products found for this vendor/category.');
+      const apiData = Array.isArray(res.data) ? res.data : [];
+
+      if (apiData.length === 0) {
+        console.log('🚫 No products returned from API.');
       }
-    } catch (err) {
-      console.error('Fetch error:', err);
-      setError('Failed to load products.');
+
+      setProducts(apiData);
+    } catch (error) {
+      console.error('❌ Vendor Product Fetch Error:', error.message);
+      Alert.alert('Error', 'Products load karan ch error aa gyi.');
     } finally {
       setLoading(false);
     }
@@ -58,74 +79,81 @@ const VendorProductScreen = ({ route, navigation }) => {
 
   const handleAddToCart = async (item) => {
     try {
-      const userId = await AsyncStorage.getItem('userId');
+      setPosting(true);
       const token = await AsyncStorage.getItem('userToken');
+      const userId = await AsyncStorage.getItem('userId');
+      const addressId = await AsyncStorage.getItem('userAddressId');
+      const cityName = await AsyncStorage.getItem('cityName') || 'Ludhiana';
 
-      if (!userId || !token) {
-        Alert.alert('Error', 'User not logged in or token missing.');
+      if (!token || !userId || !addressId) {
+        Alert.alert('Missing Info', 'Login ya address details nahi mile.');
         return;
       }
 
       const now = new Date().toISOString();
-
-      // ✅ Final Payload (addressId removed or set to 0 if required)
-      const cartPayload = {
+      const payload = {
         id: 0,
-        vendorProductId: item.id,
+        vendorProductId: item.vendorProductId || item.id,
         createdBy: Number(userId),
-        addressId: 0, // Optional: if backend requires, use default ID
+        addressId: Number(addressId),
         count: 1,
         createdDateTime: now,
         modifiedBy: Number(userId),
         modifiedDateTime: now,
       };
 
-      const res = await axios.post(
-        'http://product.sash.co.in:81/api/Cart',
-        cartPayload,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const res = await axios.post('http://product.sash.co.in:81/api/Cart', payload, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          CityName: cityName,
+        },
+      });
 
       if (res.status === 200 || res.status === 201) {
-        Alert.alert('Success', `${item.name} added to cart`, [
-          {
-            text: 'Go to Cart',
-            onPress: () => navigation.navigate('My_Cart'),
-          },
+        Alert.alert('✅ Success', 'Product cart ch add ho gya.', [
+          { text: 'My Cart', onPress: () => navigation.navigate('My_Cart') },
           { text: 'OK' },
         ]);
       } else {
-        Alert.alert('Error', 'Failed to add item to cart');
+        Alert.alert('❌ Error', 'Product cart ch add nahi ho paya.');
       }
-    } catch (error) {
-      console.error('Add to Cart Error:', error);
-      Alert.alert('Error', 'Something went wrong while adding to cart');
+    } catch (err) {
+      console.error('❌ Add to Cart Error:', err.message);
+      Alert.alert('Error', 'Cart ch add karde hoye kujh error aa gyi.');
+    } finally {
+      setPosting(false);
     }
   };
 
   const renderItem = ({ item }) => {
-    const imageUrl =
-      item?.imageUrl?.startsWith('http')
-        ? item.imageUrl
-        : `http://product.sash.co.in:81${item?.imageUrl || ''}`;
+    const imageUrl = item?.imageUrl?.startsWith('http')
+      ? item.imageUrl
+      : `http://product.sash.co.in:81${item.imageUrl || ''}`;
 
     return (
       <View style={styles.card}>
-        <Image source={{ uri: imageUrl }} style={styles.image} resizeMode="cover" />
-        <Text style={styles.name}>{item?.name || 'Unnamed Product'}</Text>
-        <Text style={styles.subText}>Price: ₹{item?.price ?? '--'}</Text>
-        <Text style={styles.subText}>GST: {item?.gst ?? '--'}%</Text>
+        <Image source={{ uri: imageUrl }} style={styles.image} />
+        <Text style={styles.name} numberOfLines={1}>{item?.name || 'Unnamed'}</Text>
+
+        <View style={styles.priceRow}>
+          <Text style={styles.originalPrice}>₹{item?.originalPrice}</Text>
+          {item.promoDiscountPercent > 0 && (
+            <>
+              <Text style={styles.discountPercent}>-{item.promoDiscountPercent}%</Text>
+              <Text style={styles.discountedPrice}>₹{item.discountedPrice?.toFixed(2)}</Text>
+            </>
+          )}
+        </View>
+
+        <Text style={styles.gst}>GST: {item?.gst ?? '--'}%</Text>
 
         <TouchableOpacity
           style={styles.button}
           onPress={() => handleAddToCart(item)}
+          disabled={posting}
         >
-          <Text style={styles.buttonText}>Add to Cart</Text>
+          <Text style={styles.buttonText}>{posting ? 'Adding...' : 'Add to Cart'}</Text>
         </TouchableOpacity>
       </View>
     );
@@ -137,82 +165,121 @@ const VendorProductScreen = ({ route, navigation }) => {
 
       {loading ? (
         <ActivityIndicator size="large" color="#007bff" style={styles.loader} />
-      ) : error ? (
-        <Text style={styles.errorText}>{error}</Text>
-      ) : (
+      ) : products.length > 0 ? (
         <FlatList
           data={products}
-          keyExtractor={(item) => item.id?.toString()}
+          keyExtractor={(item, index) => `${item.vendorProductId || item.id}-${index}`}
           renderItem={renderItem}
+          numColumns={2}
+          columnWrapperStyle={styles.row}
           contentContainerStyle={styles.listContent}
-          showsVerticalScrollIndicator={false}
         />
+      ) : (
+        <Text style={styles.noData}>
+          📭 No Products Found{'\n'}
+          Vendor ID: {vendorId}{'\n'}
+          Category ID: {categoryId}
+        </Text>
       )}
     </View>
   );
 };
 
+export default VendorProductScreen;
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
-    backgroundColor: '#fff',
+    backgroundColor: '#f8f9fa',
+    paddingHorizontal: 10,
+    paddingTop: 16,
   },
   heading: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: '700',
-    marginBottom: 10,
     textAlign: 'center',
-    color: '#333',
+    marginBottom: 10,
+    color: '#212529',
   },
   loader: {
     marginTop: 40,
   },
-  card: {
-    backgroundColor: '#f5f5f5',
-    borderRadius: 10,
-    padding: 12,
+  noData: {
+    fontSize: 16,
+    textAlign: 'center',
+    color: '#dc3545',
+    marginTop: 40,
+  },
+  row: {
+    justifyContent: 'space-between',
     marginBottom: 16,
+  },
+  card: {
+    backgroundColor: '#ffffff',
+    borderRadius: 8,
+    padding: 12,
+    width: width / 2 - 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 3,
     alignItems: 'center',
-    elevation: 2,
   },
   image: {
     width: '100%',
-    height: 150,
+    height: 100,
     borderRadius: 8,
-    backgroundColor: '#ccc',
+    marginBottom: 8,
+    backgroundColor: '#dee2e6',
   },
   name: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
-    marginTop: 8,
+    color: '#343a40',
+    marginBottom: 4,
     textAlign: 'center',
   },
-  subText: {
+  priceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+  },
+  originalPrice: {
+    fontSize: 13,
+    color: '#6c757d',
+    textDecorationLine: 'line-through',
+  },
+  discountedPrice: {
     fontSize: 14,
-    color: '#555',
-    marginTop: 2,
+    color: '#dc3545',
+    fontWeight: 'bold',
   },
-  errorText: {
-    color: 'red',
-    textAlign: 'center',
-    marginTop: 20,
+  discountPercent: {
+    fontSize: 13,
+    color: 'green',
+    fontWeight: '600',
   },
-  listContent: {
-    paddingBottom: 20,
+  gst: {
+    fontSize: 12,
+    color: '#495057',
+    marginTop: 4,
   },
   button: {
-    marginTop: 10,
-    backgroundColor: '#413BD9',
-    paddingVertical: 8,
-    paddingHorizontal: 20,
-    borderRadius: 8,
+    backgroundColor: '#007bff',
+    paddingVertical: 6,
+    paddingHorizontal: 14,
+    borderRadius: 6,
+    marginTop: 8,
   },
   buttonText: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: 13,
     fontWeight: '600',
   },
+  listContent: {
+    paddingBottom: 30,
+  },
 });
-
-export default VendorProductScreen;

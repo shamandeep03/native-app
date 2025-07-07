@@ -14,7 +14,6 @@ const Vendor = () => {
   const navigation = useNavigation();
   const route = useRoute();
 
-  // ✅ Extracting values from route.params
   const { categoryId, categoryName, cityName } = route.params || {};
 
   useEffect(() => {
@@ -54,17 +53,22 @@ const Vendor = () => {
     }
   };
 
+  const handleVendorPress = async (item) => {
+    try {
+      await AsyncStorage.setItem('selectedCategoryId', categoryId.toString()); // ✅ Save categoryId
+
+      navigation.navigate('VendorProductScreen', {
+        vendorId: item.id,
+        categoryId,
+        vendorName: `${item.firstName} ${item.lastName}`,
+      });
+    } catch (e) {
+      console.error('Error saving categoryId:', e);
+    }
+  };
+
   const renderItem = ({ item }) => (
-    <TouchableOpacity
-      style={styles.card}
-      onPress={() =>
-        navigation.navigate('VendorProductScreen', {
-          vendorId: item.id,
-          categoryId,
-          vendorName: `${item.firstName} ${item.lastName}`,
-        })
-      }
-    >
+    <TouchableOpacity style={styles.card} onPress={() => handleVendorPress(item)}>
       <Image
         source={{ uri: item?.profileImageUrl || 'https://via.placeholder.com/180' }}
         style={styles.image}
