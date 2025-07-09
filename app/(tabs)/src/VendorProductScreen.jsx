@@ -1,276 +1,240 @@
+/**
+ * Category Screen (English Version)
+ */
 import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
   FlatList,
-  Image,
   ActivityIndicator,
   StyleSheet,
+  Image,
   TouchableOpacity,
+  useWindowDimensions,
   Alert,
-  Dimensions,
+  SafeAreaView,
+  KeyboardAvoidingView,
+  Platform,
+  TextInput,
 } from 'react-native';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import DropDownPicker from 'react-native-dropdown-picker';
+import { useNavigation } from '@react-navigation/native';
+import Icon from 'react-native-vector-icons/MaterialIcons';
+import Modal from 'react-native-modal';
 
-const { width } = Dimensions.get('window');
-
-const VendorProductScreen = ({ route, navigation }) => {
-  const [products, setProducts] = useState([]);
+const Category = () => {
+  const [category, setCategory] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [posting, setPosting] = useState(false);
-
-  const { vendorId, categoryId, vendorName = 'Vendor' } = route.params || {};
+  const [cities, setCities] = useState([]);
+  const [addresses, setAddresses] = useState([]);
+  const [isModalVisible, setModalVisible] = useState(false);
+  const [selectedCityName, setSelectedCityName] = useState('');
+  const [form, setForm] = useState({
+    location: '',
+    pincode: '',
+    floor: '',
+    cityId: null,
+    isActive: true,
+  });
+  const [cityDropdownOpen, setCityDropdownOpen] = useState(false);
+  const navigation = useNavigation();
+  const { width } = useWindowDimensions();
+  const imageSize = width / 4.2;
+  const [expandedAddressId, setExpandedAddressId] = useState(null);
 
   useEffect(() => {
-    console.log('📦 Params:', { vendorId, categoryId });
-    loadVendorProducts();
+    getCategory();
+    getCities();
+    getSavedCity();
   }, []);
 
-  const loadVendorProducts = async () => {
+  useEffect(() => {
+    if (isModalVisible) fetchAddresses();
+  }, [isModalVisible]);
+
+  const getSavedCity = async () => {
+    const city = await AsyncStorage.getItem('userCityName');
+    if (city) setSelectedCityName(city);
+  };
+
+  const getCategory = async () => {
     try {
-      const storedCategoryId = await AsyncStorage.getItem('selectedCategoryId');
-      const selectedCategoryId = categoryId || Number(storedCategoryId);
-
-      if (!vendorId || !selectedCategoryId) {
-        console.warn('⚠️ Missing vendorId or categoryId');
-        Alert.alert('⚠️ Missing Info', 'Vendor ID ya Category ID missing aa.');
-        setLoading(false);
-        return;
-      }
-
-      const token = await AsyncStorage.getItem('userToken');
-      const cityName = await AsyncStorage.getItem('cityName') || 'Ludhiana';
-
-      console.log('🔑 Token:', token);
-      console.log('🏙️ City Name:', cityName);
-
-      if (!token) {
-        Alert.alert('🔒 Unauthorized', 'Login token missing aa.');
-        setLoading(false);
-        return;
-      }
-
-      const url = `http://product.sash.co.in/api/VendorProduct/products/by-vendor-category?vendorId=${vendorId}&categoryId=${selectedCategoryId}`;
-      console.log('🌐 API URL:', url);
-
-      const res = await axios.get(url, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          CityName: cityName,
-        },
-      });
-
-      console.log('📋 API Full Response:', res.data);
-
-      const apiData = Array.isArray(res.data) ? res.data : res.data?.data || [];
-      console.log('📦 Parsed Products:', apiData);
-
-      setProducts(apiData);
+      const response = await fetch('http://product.sash.co.in:81/api/ProductCategory/category-list');
+      const text = await response.text();
+      const data = JSON.parse(text);
+      setCategory(Array.isArray(data?.data) ? data.data : []);
     } catch (error) {
-      console.error('❌ Vendor Product Fetch Error:', error.message);
-      Alert.alert('Error', 'Products load karan ch error aa gyi.');
+      console.error('Category Error:', error.message);
+      Alert.alert('Error', 'Failed to load categories.');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleAddToCart = async (item) => {
+  const getCities = async () => {
     try {
-      setPosting(true);
-
-      const token = await AsyncStorage.getItem('userToken');
-      const userId = await AsyncStorage.getItem('userId');
-      const addressId = await AsyncStorage.getItem('userAddressId');
-      const cityName = await AsyncStorage.getItem('cityName') || 'Ludhiana';
-
-      console.log('🔐 Token:', token);
-      console.log('👤 userId:', userId);
-      console.log('🏠 addressId:', addressId);
-      console.log('📦 item:', item);
-
-      if (!token || !userId || !addressId) {
-        Alert.alert('⚠️ Missing Info', 'Login ya address details nahi mile.');
-        setPosting(false);
-        return;
-      }
-
-      if (!item?.id) {
-        Alert.alert('🛑 Missing Product ID', 'item.id null aa. Product invalid ho sakda.');
-        console.warn('🛑 item.id missing:', item);
-        setPosting(false);
-        return;
-      }
-
-      const now = new Date().toISOString();
-      const payload = {
-        id: 0,
-        vendorProductId: Number(item.id),
-        createdBy: Number(userId),
-        addressId: Number(addressId),
-        count: 1,
-        createdDateTime: now,
-        modifiedBy: Number(userId),
-        modifiedDateTime: now,
-      };
-
-      console.log('📤 Payload to POST:', payload);
-
-      const res = await axios.post('http://product.sash.co.in:81/api/Cart', payload, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          CityName: cityName,
-        },
-      });
-
-      console.log('✅ POST Response:', res.status, res.data);
-
-      if (res.status === 200 || res.status === 201) {
-        Alert.alert('✅ Success', 'Product cart ch add ho gya.', [
-          { text: 'My Cart', onPress: () => navigation.navigate('My_Cart') },
-          { text: 'OK' },
-        ]);
-      } else {
-        Alert.alert('❌ Error', 'Product cart ch add nahi ho paya.');
-      }
+      const res = await axios.get('http://product.sash.co.in:81/api/City/city-list');
+      const formatted = res.data?.data?.map((c) => ({ label: c.name, value: c.id })) || [];
+      setCities(formatted);
     } catch (err) {
-      console.error('❌ Add to Cart Error:', err.message);
-      Alert.alert('Error', 'Cart ch add karde hoye kujh error aa gyi.');
-    } finally {
-      setPosting(false);
+      Alert.alert('Error', 'Failed to load cities.');
     }
   };
 
-  const renderItem = ({ item }) => {
-    const imageUrl = item?.imageUrl?.startsWith('http')
-      ? item.imageUrl
-      : `http://product.sash.co.in:81${item.imageUrl || ''}`;
+  const fetchAddresses = async () => {
+    try {
+      const token = await AsyncStorage.getItem('userToken');
+      if (!token) return Alert.alert('Error', 'Token not found.');
 
-    return (
-      <View style={styles.card}>
-        <Image source={{ uri: imageUrl }} style={styles.image} />
-        <Text style={styles.name} numberOfLines={1}>{item?.name || 'Unnamed'}</Text>
+      const res = await axios.get('http://product.sash.co.in:81/api/Address', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
-        <View style={styles.priceRow}>
-          <Text style={styles.originalPrice}>₹{item?.originalPrice}</Text>
-          {item.promoDiscountPercent > 0 && (
-            <>
-              <Text style={styles.discountPercent}>-{item.promoDiscountPercent}%</Text>
-              <Text style={styles.discountedPrice}>₹{item.discountedPrice?.toFixed(2)}</Text>
-            </>
-          )}
-        </View>
-
-        <Text style={styles.gst}>GST: {item?.gst ?? '--'}%</Text>
-
-        <TouchableOpacity
-          style={styles.button}
-          onPress={() => handleAddToCart(item)}
-          disabled={posting}
-        >
-          <Text style={styles.buttonText}>{posting ? 'Adding...' : 'Add to Cart'}</Text>
-        </TouchableOpacity>
-      </View>
-    );
+      setAddresses(Array.isArray(res.data) ? res.data : []);
+    } catch (e) {
+      console.error('Address fetch error', e.message);
+      Alert.alert('Error', 'Failed to fetch addresses.');
+    }
   };
 
-  return (
-    <View style={styles.container}>
-      <Text style={styles.heading}>Products by {vendorName}</Text>
+  const submitAddress = async () => {
+    try {
+      const userId = await AsyncStorage.getItem('userId');
+      const token = await AsyncStorage.getItem('userToken');
+      if (!userId || !token) return Alert.alert('Error', 'User not logged in.');
 
-      {loading ? (
-        <ActivityIndicator size="large" color="#007bff" style={styles.loader} />
-      ) : products.length > 0 ? (
-        <FlatList
-          data={products}
-          keyExtractor={(item, index) => `${item.id}-${index}`}
-          renderItem={renderItem}
-          numColumns={2}
-          columnWrapperStyle={styles.row}
-          contentContainerStyle={styles.listContent}
+      const payload = {
+        location: form.location.trim(),
+        pincode: form.pincode.trim(),
+        floor: form.floor.trim(),
+        isActive: true,
+        userId: Number(userId),
+        isDeleted: false,
+        isPrimary: true,
+        cityId: Number(form.cityId),
+      };
+
+      const res = await axios.post('http://product.sash.co.in:81/api/Address', payload, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const savedId = res.data?.id ?? res.data?.data?.id;
+      if (savedId) {
+        await AsyncStorage.setItem('userAddressId', String(savedId));
+        setForm({ location: '', pincode: '', floor: '', cityId: null, isActive: true });
+        fetchAddresses();
+        Alert.alert('Success', 'Address saved successfully.');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Failed to save address.');
+    }
+  };
+
+  const handleAddressSelect = async (addr) => {
+    try {
+      await AsyncStorage.setItem('userAddressId', String(addr.id));
+      Alert.alert('Selected', `Address ID ${addr.id} saved.`);
+      setModalVisible(false);
+    } catch (err) {
+      console.error('AsyncStorage error:', err);
+    }
+  };
+
+  const handleCategoryPress = async (categoryItem) => {
+    try {
+      let cityName = selectedCityName;
+      if (!cityName) {
+        cityName = await AsyncStorage.getItem('userCityName');
+      }
+      navigation.navigate('Vendor', {
+        categoryId: categoryItem.id,
+        categoryName: categoryItem.name,
+        cityName: cityName || 'Unknown',
+      });
+    } catch (err) {
+      console.log('Navigation Error:', err);
+    }
+  };
+
+  const renderItem = ({ item }) => (
+    <TouchableOpacity onPress={() => handleCategoryPress(item)} activeOpacity={0.7}>
+      <View style={[styles.card, { width: imageSize + 10 }]}>
+        <Image
+          source={{ uri: item?.productFile?.imageUrl || 'https://via.placeholder.com/100' }}
+          style={styles.image}
+          resizeMode="cover"
         />
-      ) : (
-        <Text style={styles.noData}>📭 No Products Found{'\n'}Vendor ID: {vendorId}{'\n'}Category ID: {categoryId}</Text>
+        <Text style={[styles.text, { maxWidth: imageSize + 10 }]} numberOfLines={1}>
+          {item.name || 'N/A'}
+        </Text>
+      </View>
+    </TouchableOpacity>
+  );
+
+  const renderAddress = ({ item }) => (
+    <View style={styles.addressCard}>
+      <View style={styles.addressHeader}>
+        <View>
+          <Text style={styles.addressTitle}>{item.location}</Text>
+          <Text style={styles.addressSubtitle}>Pincode: {item.pincode}</Text>
+        </View>
+        <TouchableOpacity onPress={() => setExpandedAddressId(expandedAddressId === item.id ? null : item.id)}>
+          <Icon name={expandedAddressId === item.id ? 'keyboard-arrow-up' : 'keyboard-arrow-down'} size={26} color="#007bff" />
+        </TouchableOpacity>
+      </View>
+      {expandedAddressId === item.id && (
+        <View style={styles.addressDetails}>
+          <Text>🏢 Floor: {item.floor || 'N/A'}</Text>
+          <Text>🏙️ City ID: {item.cityId}</Text>
+          <Text>🆔 Address ID: {item.id}</Text>
+          <Text>📌 Primary: {item.isPrimary ? 'Yes' : 'No'}</Text>
+        </View>
       )}
+      <TouchableOpacity onPress={() => handleAddressSelect(item)} style={styles.selectBtn}>
+        <Text style={{ color: 'white', textAlign: 'center', fontWeight: '600' }}>Use this Address</Text>
+      </TouchableOpacity>
     </View>
+  );
+
+  return (
+    <SafeAreaView style={styles.safeArea}>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
+        <FlatList
+          data={category}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          keyExtractor={(item) => item.id?.toString()}
+          renderItem={renderItem}
+        />
+
+        <Modal isVisible={isModalVisible}>
+          <FlatList
+            data={addresses}
+            keyExtractor={(item) => item.id?.toString()}
+            renderItem={renderAddress}
+          />
+        </Modal>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 };
 
-export default VendorProductScreen;
-
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f8f9fa', paddingHorizontal: 10, paddingTop: 16 },
-  heading: { fontSize: 22, fontWeight: '700', textAlign: 'center', marginBottom: 10, color: '#212529' },
-  loader: { marginTop: 40 },
-  noData: { fontSize: 16, textAlign: 'center', color: '#dc3545', marginTop: 40 },
-  row: { justifyContent: 'space-between', marginBottom: 16 },
-  card: {
-    backgroundColor: '#ffffff',
-    borderRadius: 8,
-    padding: 12,
-    width: width / 2 - 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 3,
-    alignItems: 'center',
-  },
-  image: {
-    width: '100%',
-    height: 100,
-    borderRadius: 8,
-    marginBottom: 8,
-    backgroundColor: '#dee2e6',
-  },
-  name: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#343a40',
-    marginBottom: 4,
-    textAlign: 'center',
-  },
-  priceRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-  },
-  originalPrice: {
-    fontSize: 13,
-    color: '#6c757d',
-    textDecorationLine: 'line-through',
-  },
-  discountedPrice: {
-    fontSize: 14,
-    color: '#dc3545',
-    fontWeight: 'bold',
-  },
-  discountPercent: {
-    fontSize: 13,
-    color: 'green',
-    fontWeight: '600',
-  },
-  gst: {
-    fontSize: 12,
-    color: '#495057',
-    marginTop: 4,
-  },
-  button: {
-    backgroundColor: '#007bff',
-    paddingVertical: 6,
-    paddingHorizontal: 14,
-    borderRadius: 6,
-    marginTop: 8,
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  listContent: {
-    paddingBottom: 30,
-  },
+  safeArea: { flex: 1, backgroundColor: 'white' },
+  card: { alignItems: 'center', marginRight: 10, padding: 5, marginTop: 10 },
+  image: { width: 100, height: 100, borderRadius: 100, marginBottom: 6, backgroundColor: '#eee' },
+  text: { fontSize: 14, textAlign: 'center', fontWeight: '600' },
+  addressCard: { borderWidth: 1, borderColor: '#ccc', borderRadius: 8, padding: 12, margin: 10, backgroundColor: '#f9f9f9' },
+  addressHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  addressTitle: { fontSize: 16, fontWeight: '600' },
+  addressSubtitle: { fontSize: 13, color: 'gray' },
+  addressDetails: { marginTop: 10, backgroundColor: '#eef1f5', padding: 10, borderRadius: 6 },
+  selectBtn: { marginTop: 10, backgroundColor: '#007bff', paddingVertical: 10, borderRadius: 6 },
 });
+
+export default Category;

@@ -19,18 +19,42 @@ const My_Cart = () => {
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const [address, setAddress] = useState(null);
 
   useFocusEffect(
     React.useCallback(() => {
       fetchCart();
+      getAddress();
     }, [])
   );
+
+  const getAddress = async () => {
+    const addressId = await AsyncStorage.getItem("userAddressId");
+    const cityName = await AsyncStorage.getItem("userCityName");
+    if (!addressId || !cityName) return;
+    const token = await AsyncStorage.getItem("userToken");
+    try {
+      const res = await axios.get(
+        `http://product.sash.co.in:81/api/Address/${addressId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            CityName: cityName,
+          },
+        }
+      );
+      setAddress(res.data);
+    } catch (e) {
+      console.warn("Address fetch failed", e);
+    }
+  };
 
   const fetchCart = async () => {
     try {
       const token = await AsyncStorage.getItem("userToken");
-      if (!token) {
-        console.warn("Token not found");
+      const cityName = await AsyncStorage.getItem("userCityName");
+      if (!token || !cityName) {
+        console.warn("Token or CityName not found");
         return;
       }
 
@@ -39,6 +63,7 @@ const My_Cart = () => {
         {
           headers: {
             Authorization: `Bearer ${token}`,
+            CityName: cityName,
           },
         }
       );
@@ -88,8 +113,9 @@ const My_Cart = () => {
 
           try {
             const token = await AsyncStorage.getItem("userToken");
-            if (!token) {
-              console.warn("Token not found");
+            const cityName = await AsyncStorage.getItem("userCityName");
+            if (!token || !cityName) {
+              console.warn("Token or CityName not found");
               return;
             }
 
@@ -98,6 +124,7 @@ const My_Cart = () => {
               {
                 headers: {
                   Authorization: `Bearer ${token}`,
+                  CityName: cityName,
                 },
               }
             );
@@ -133,10 +160,14 @@ const My_Cart = () => {
           contentContainerStyle={{ paddingBottom: 100 }}
         >
           <View style={styles.topBar}>
-            <Text style={styles.delivery}>Deliver to: Preet Nager, 148028</Text>
-            <Text style={styles.address}>
-              House no-78, Near boys school sunam, Sunam
-            </Text>
+            {address ? (
+              <>
+                <Text style={styles.delivery}>Deliver to: {address.location}, {address.pincode}</Text>
+                <Text style={styles.address}>{address.floor}</Text>
+              </>
+            ) : (
+              <Text style={styles.delivery}>No address selected.</Text>
+            )}
             <TouchableOpacity onPress={() => Alert.alert("Change address")}>
               <Text style={styles.change}>Change</Text>
             </TouchableOpacity>

@@ -1,3 +1,5 @@
+// Updated Order screen with Payment Popup Modal
+
 import React, { useEffect, useState } from 'react';
 import {
   View,
@@ -7,11 +9,12 @@ import {
   TouchableOpacity,
   Alert,
   ScrollView,
+  Modal,
+  Pressable,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import axios from 'axios';
-import { Menu, Button, Provider as PaperProvider } from 'react-native-paper';
 
 export default function Order() {
   const [cartItems, setCartItems] = useState([]);
@@ -19,7 +22,7 @@ export default function Order() {
   const [loading, setLoading] = useState(true);
   const [paymentMethods, setPaymentMethods] = useState([]);
   const [selectedPayment, setSelectedPayment] = useState(null);
-  const [menuVisible, setMenuVisible] = useState(false);
+  const [paymentModalVisible, setPaymentModalVisible] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -27,9 +30,10 @@ export default function Order() {
       try {
         const storedCart = await AsyncStorage.getItem('cartItems');
         const storedTotal = await AsyncStorage.getItem('totalAmount');
-        const token = await AsyncStorage.getItem('token');
+        const token = await AsyncStorage.getItem('userToken');
+        const userId = await AsyncStorage.getItem('userId');
 
-        if (!token) {
+        if (!token || !userId) {
           Alert.alert('Login Required', 'Please log in again.');
           return;
         }
@@ -38,11 +42,8 @@ export default function Order() {
         if (storedTotal) setTotal(storedTotal);
 
         const res = await axios.get('http://product.sash.co.in:81/api/Order/payment-methods', {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
         });
-
         setPaymentMethods(res.data || []);
       } catch (error) {
         console.error('Failed to load:', error);
@@ -62,9 +63,10 @@ export default function Order() {
     }
 
     try {
+      const token = await AsyncStorage.getItem('userToken');
       const userId = await AsyncStorage.getItem('userId');
-      const token = await AsyncStorage.getItem('token');
       const fcmToken = await AsyncStorage.getItem('fcmToken');
+      const couponCode = await AsyncStorage.getItem('appliedCoupon') || "";
 
       if (!token || !userId) {
         Alert.alert('Login Error', 'User ID or Token missing.');
@@ -80,6 +82,7 @@ export default function Order() {
         orderStatusId: 1,
         isDeleted: false,
         fcmToken: fcmToken || '',
+        couponCode,
         orderItems: cartItems.map((item) => ({
           vendorProductId: item.vendorProductId || item.product?.id,
           count: item.qty,
@@ -101,8 +104,8 @@ export default function Order() {
         { text: 'OK', onPress: () => router.replace('/src/Coupon') },
       ]);
     } catch (error) {
-      console.error('Order Error:', error);
-      Alert.alert('Error', 'Failed to place the order.');
+      console.error('❌ Order Error:', error?.response?.data || error.message);
+      Alert.alert('Error', 'Failed to place the order. Check all fields.');
     }
   };
 
@@ -115,56 +118,58 @@ export default function Order() {
   }
 
   return (
-    <PaperProvider>
-      <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.title}>🧾 Confirm Your Order</Text>
+    <ScrollView contentContainerStyle={styles.container}>
+      <Text style={styles.title}>🧾 Confirm Your Order</Text>
 
-        <Text style={styles.sectionTitle}>🛒 Cart Items</Text>
-        {cartItems.length === 0 ? (
-          <Text style={styles.itemText}>No items in cart.</Text>
-        ) : (
-          cartItems.map((item, index) => (
-            <Text key={index} style={styles.itemText}>
-              {item.product?.name || 'Unnamed Item'} × {item.qty}
-            </Text>
-          ))
-        )}
+      <Text style={styles.sectionTitle}>🛒 Cart Items</Text>
+      {cartItems.length === 0 ? (
+        <Text style={styles.itemText}>No items in cart.</Text>
+      ) : (
+        cartItems.map((item, index) => (
+          <Text key={index} style={styles.itemText}>
+            {item.product?.name || 'Unnamed Item'} × {item.qty}
+          </Text>
+        ))
+      )}
 
-        <Text style={styles.total}>💰 Total: ₹{total}</Text>
+      <Text style={styles.total}>💰 Total: ₹{total}</Text>
 
-        <Text style={styles.sectionTitle}>💳 Payment Method</Text>
-        <Menu
-          visible={menuVisible}
-          onDismiss={() => setMenuVisible(false)}
-          anchor={
-            <Button
-              mode="outlined"
-              onPress={() => setMenuVisible(true)}
-              style={{ marginTop: 10 }}
-            >
-              {selectedPayment ? selectedPayment.name : 'Select Payment Method'}
-            </Button>
-          }
-        >
-          {paymentMethods.map((method) => (
-            <Menu.Item
-              key={method.id}
-              onPress={() => {
-                setSelectedPayment(method);
-                setMenuVisible(false);
-              }}
-              title={method.name}
-            />
-          ))}
-        </Menu>
+      <Text style={styles.sectionTitle}>💳 Payment Method</Text>
+      <TouchableOpacity style={styles.selectBtn} onPress={() => setPaymentModalVisible(true)}>
+        <Text style={styles.selectBtnText}>
+          {selectedPayment ? selectedPayment.name : 'Select Payment Method'}
+        </Text>
+      </TouchableOpacity>
 
-        {cartItems.length > 0 && (
-          <TouchableOpacity style={styles.button} onPress={handlePlaceOrder}>
-            <Text style={styles.buttonText}>✅ Place Order</Text>
-          </TouchableOpacity>
-        )}
-      </ScrollView>
-    </PaperProvider>
+      <Modal visible={paymentModalVisible} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalBox}>
+            <Text style={styles.modalTitle}>Choose Payment Method</Text>
+            {paymentMethods.map((method) => (
+              <Pressable
+                key={method.id}
+                onPress={() => {
+                  setSelectedPayment(method);
+                  setPaymentModalVisible(false);
+                }}
+                style={styles.paymentOption}
+              >
+                <Text style={styles.paymentText}>{method.name}</Text>
+              </Pressable>
+            ))}
+            <Pressable onPress={() => setPaymentModalVisible(false)}>
+              <Text style={styles.cancelText}>Cancel</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
+
+      {cartItems.length > 0 && (
+        <TouchableOpacity style={styles.button} onPress={handlePlaceOrder}>
+          <Text style={styles.buttonText}>✅ Place Order</Text>
+        </TouchableOpacity>
+      )}
+    </ScrollView>
   );
 }
 
@@ -203,6 +208,16 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#000',
   },
+  selectBtn: {
+    marginTop: 10,
+    padding: 12,
+    backgroundColor: '#f0f0f0',
+    borderRadius: 8,
+  },
+  selectBtnText: {
+    fontSize: 16,
+    color: '#333',
+  },
   button: {
     backgroundColor: '#6A5ACD',
     marginTop: 30,
@@ -213,6 +228,40 @@ const styles = StyleSheet.create({
   buttonText: {
     color: '#fff',
     fontSize: 16,
+    fontWeight: 'bold',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalBox: {
+    width: '80%',
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    padding: 20,
+    alignItems: 'center',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 20,
+  },
+  paymentOption: {
+    paddingVertical: 10,
+    width: '100%',
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: '#ddd',
+  },
+  paymentText: {
+    fontSize: 16,
+    color: '#333',
+  },
+  cancelText: {
+    color: 'red',
+    marginTop: 15,
     fontWeight: 'bold',
   },
 });

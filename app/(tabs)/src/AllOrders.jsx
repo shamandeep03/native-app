@@ -6,7 +6,6 @@ import {
   Image,
   StyleSheet,
   ActivityIndicator,
-  ScrollView,
   Dimensions,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -22,17 +21,20 @@ export default function AllOrders() {
     const fetchOrders = async () => {
       try {
         const token = await AsyncStorage.getItem('userToken');
-        const userId = await AsyncStorage.getItem('userId');
 
-        const response = await axios.get('http://product.sash.co.in:81/api/Order/all-orders', {
+        if (!token) {
+          console.warn('Token missing');
+          return;
+        }
+
+        const response = await axios.get('http://product.sash.co.in/api/Order/all-orders', {
           headers: { Authorization: `Bearer ${token}` },
         });
 
-        const userOrders = response.data.orders.filter(order => order.userId == userId);
-        setOrders(userOrders);
-        setLoading(false);
+        setOrders(response.data.orders || []);
       } catch (error) {
-        console.error('Failed to fetch orders:', error);
+        console.error('Failed to fetch orders:', error?.response?.data || error.message);
+      } finally {
         setLoading(false);
       }
     };
@@ -43,28 +45,35 @@ export default function AllOrders() {
   const renderOrderItem = ({ item }) => (
     <View style={styles.orderCard}>
       <Text style={styles.orderId}>🧾 Order Number: {item.orderNumber}</Text>
-      <Text style={styles.text}>💰 Amount: ₹{item.amount.toFixed(2)}</Text>
-      <Text style={styles.text}>🎁 Discount: ₹{item.discount.toFixed(2)}</Text>
+      <Text style={styles.text}>💰 Amount: ₹{item.amount?.toFixed(2) || '0.00'}</Text>
+      <Text style={styles.text}>🎁 Discount: ₹{item.discount?.toFixed(2) || '0.00'}</Text>
       <Text style={styles.text}>📦 Status: {item.orderStatus?.name || 'N/A'}</Text>
       <Text style={styles.text}>💳 Payment: {item.paymentMethod?.name || 'N/A'}</Text>
       <Text style={styles.userInfo}>
         👤 Customer: {item.user?.firstName} {item.user?.lastName} | 📞 {item.user?.phoneNumber}
       </Text>
 
-      <FlatList
-        data={item.orderItems || []}
-        keyExtractor={(orderItem, index) => index.toString()}
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        renderItem={({ item }) => (
-          <View style={styles.itemCard}>
-            <Image source={{ uri: item.product?.imageUrl }} style={styles.image} />
-            <Text style={styles.name}>{item.product?.name}</Text>
-            <Text style={styles.price}>₹{item.price} x {item.count}</Text>
-            <Text style={styles.gst}>GST: ₹{item.product?.gst}</Text>
-          </View>
-        )}
-      />
+      {Array.isArray(item.orderItems) && item.orderItems.length > 0 ? (
+        <FlatList
+          data={item.orderItems}
+          keyExtractor={(orderItem, index) => index.toString()}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          renderItem={({ item }) => (
+            <View style={styles.itemCard}>
+              <Image
+                source={{ uri: item.product?.imageUrl || 'https://via.placeholder.com/100' }}
+                style={styles.image}
+              />
+              <Text style={styles.name}>{item.product?.name || 'No Name'}</Text>
+              <Text style={styles.price}>₹{item.price} × {item.count}</Text>
+              <Text style={styles.gst}>GST: ₹{item.product?.gst || 0}</Text>
+            </View>
+          )}
+        />
+      ) : (
+        <Text style={styles.noItems}>No items in this order</Text>
+      )}
     </View>
   );
 
@@ -77,21 +86,22 @@ export default function AllOrders() {
   }
 
   return (
-    <ScrollView>
-      <View style={styles.container}>
-        <Text style={styles.title}>📋 My Orders</Text>
-        <FlatList
-          data={orders}
-          keyExtractor={item => item.id.toString()}
-          renderItem={renderOrderItem}
-        />
-      </View>
-    </ScrollView>
+    <FlatList
+      data={orders}
+      keyExtractor={(item) => item.id.toString()}
+      renderItem={renderOrderItem}
+      contentContainerStyle={styles.container}
+      ListHeaderComponent={<Text style={styles.title}>📋 My Orders</Text>}
+      ListEmptyComponent={<Text style={styles.noItems}>You have no orders.</Text>}
+    />
   );
 }
 
 const styles = StyleSheet.create({
-  container: { padding: 16, paddingBottom: 100 },
+  container: {
+    padding: 16,
+    paddingBottom: 100,
+  },
   title: {
     fontSize: 24,
     fontWeight: '700',
@@ -152,6 +162,13 @@ const styles = StyleSheet.create({
   gst: {
     fontSize: 12,
     color: '#888',
+  },
+  noItems: {
+    fontSize: 14,
+    color: '#999',
+    marginTop: 10,
+    textAlign: 'center',
+    fontStyle: 'italic',
   },
   loader: {
     flex: 1,
