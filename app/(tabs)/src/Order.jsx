@@ -1,4 +1,4 @@
-// Updated Order screen with Payment Popup Modal
+// Updated Order screen with Total, Discount, and Product Image Support
 
 import React, { useEffect, useState } from 'react';
 import {
@@ -11,6 +11,7 @@ import {
   ScrollView,
   Modal,
   Pressable,
+  Image,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
@@ -19,6 +20,7 @@ import axios from 'axios';
 export default function Order() {
   const [cartItems, setCartItems] = useState([]);
   const [total, setTotal] = useState('0');
+  const [discount, setDiscount] = useState('0');
   const [loading, setLoading] = useState(true);
   const [paymentMethods, setPaymentMethods] = useState([]);
   const [selectedPayment, setSelectedPayment] = useState(null);
@@ -30,6 +32,7 @@ export default function Order() {
       try {
         const storedCart = await AsyncStorage.getItem('cartItems');
         const storedTotal = await AsyncStorage.getItem('totalAmount');
+        const storedDiscount = await AsyncStorage.getItem('totalDiscount');
         const token = await AsyncStorage.getItem('userToken');
         const userId = await AsyncStorage.getItem('userId');
 
@@ -40,6 +43,7 @@ export default function Order() {
 
         if (storedCart) setCartItems(JSON.parse(storedCart));
         if (storedTotal) setTotal(storedTotal);
+        if (storedDiscount) setDiscount(storedDiscount);
 
         const res = await axios.get('http://product.sash.co.in:81/api/Order/payment-methods', {
           headers: { Authorization: `Bearer ${token}` },
@@ -77,7 +81,7 @@ export default function Order() {
         orderNumber: `ORD-${Math.random().toString(36).substr(2, 8)}`,
         paymentMethodId: selectedPayment.id,
         amount: parseFloat(total),
-        discount: 0,
+        discount: parseFloat(discount),
         userId: parseInt(userId),
         orderStatusId: 1,
         isDeleted: false,
@@ -99,6 +103,7 @@ export default function Order() {
 
       await AsyncStorage.removeItem('cartItems');
       await AsyncStorage.removeItem('totalAmount');
+      await AsyncStorage.removeItem('totalDiscount');
 
       Alert.alert('✅ Order Placed', 'Your order has been successfully placed.', [
         { text: 'OK', onPress: () => router.replace('/src/Coupon') },
@@ -126,12 +131,21 @@ export default function Order() {
         <Text style={styles.itemText}>No items in cart.</Text>
       ) : (
         cartItems.map((item, index) => (
-          <Text key={index} style={styles.itemText}>
-            {item.product?.name || 'Unnamed Item'} × {item.qty}
-          </Text>
+          <View key={index} style={styles.cartItem}>
+            <Image
+              source={{ uri: item.product?.productFile?.imageUrl }}
+              style={styles.productImage}
+            />
+            <View style={{ marginLeft: 10, flex: 1 }}>
+              <Text style={styles.itemText}>{item.product?.name || 'Unnamed Item'}</Text>
+              <Text style={styles.itemSubText}>Qty: {item.qty}</Text>
+              <Text style={styles.itemSubText}>₹{item.product?.price || 0} each</Text>
+            </View>
+          </View>
         ))
       )}
 
+      <Text style={styles.total}>💸 Discount: ₹{discount}</Text>
       <Text style={styles.total}>💰 Total: ₹{total}</Text>
 
       <Text style={styles.sectionTitle}>💳 Payment Method</Text>
@@ -199,12 +213,29 @@ const styles = StyleSheet.create({
   },
   itemText: {
     fontSize: 16,
-    marginTop: 5,
-    color: '#555',
+    fontWeight: '600',
+    color: '#222',
+  },
+  itemSubText: {
+    fontSize: 14,
+    color: '#666',
+  },
+  cartItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    borderBottomColor: '#ddd',
+    borderBottomWidth: 1,
+  },
+  productImage: {
+    width: 60,
+    height: 60,
+    borderRadius: 6,
+    backgroundColor: '#f2f2f2',
   },
   total: {
-    marginTop: 20,
-    fontSize: 20,
+    marginTop: 10,
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#000',
   },

@@ -1,7 +1,18 @@
 {
-    "java.configuration.updateBuildConfiguration": "automatic",
-    "java.compile.nullAnalysis.mode": "disabled",
-    "java.project.sourcePaths": [
-        "node_modules/@react-native-async-storage"
-    ]
+  // Java extension auto build off rakho
+  "java.configuration.updateBuildConfiguration": "disabled",
+
+  // Null checks disable
+  "java.compile.nullAnalysis.mode": "disabled",
+
+  // Metadata project root vich generate na hove
+  "java.import.generatesMetadataFilesAtProjectRoot": false,
+
+  // Metadata files explorer chh na dikhai den
+  "files.exclude": {
+    "**/.project": true,
+    "**/.classpath": true,
+    "**/.settings": true,
+    "**/.factorypath": true
+  }
 }
